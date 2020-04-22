@@ -18,9 +18,10 @@ import kotlinx.android.synthetic.main.fragment_search.view.*
 import net.xblacky.animexstream.R
 import net.xblacky.animexstream.ui.main.favourites.epoxy.FavouriteController
 import net.xblacky.animexstream.utils.ItemOffsetDecoration
+import net.xblacky.animexstream.utils.Utils
 import net.xblacky.animexstream.utils.model.FavouriteModel
 
-class FavouriteFragment: Fragment(), FavouriteController.EpoxySearchAdapterCallbacks {
+class FavouriteFragment: Fragment(), FavouriteController.EpoxySearchAdapterCallbacks,View.OnClickListener {
     private lateinit var rootView: View
     private lateinit var viewModel: FavouriteViewModel
     private val favouriteController by lazy {
@@ -34,6 +35,7 @@ class FavouriteFragment: Fragment(), FavouriteController.EpoxySearchAdapterCallb
          rootView = inflater.inflate(R.layout.fragment_favourite, container, false)
         setAdapters()
         transitionListener()
+        setClickListeners()
         return rootView
     }
 
@@ -62,15 +64,25 @@ class FavouriteFragment: Fragment(), FavouriteController.EpoxySearchAdapterCallb
         })
     }
 
+
     private fun setAdapters(){
-        favouriteController.spanCount = 3
+        favouriteController.spanCount = Utils.calculateNoOfColumns(context!!, 150f)
         rootView.recyclerView.apply {
-            layoutManager = GridLayoutManager(context, 3)
+            layoutManager = GridLayoutManager(context, Utils.calculateNoOfColumns(context!!, 150f))
             adapter = favouriteController.adapter
             (layoutManager as GridLayoutManager).spanSizeLookup = favouriteController.spanSizeLookup
         }
         rootView.recyclerView.addItemDecoration(ItemOffsetDecoration(context,R.dimen.episode_offset_left))
 
+    }
+
+    private fun getSpanCount(): Int {
+        val orientation = resources.configuration.orientation
+        return if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            5
+        } else {
+            3
+        }
     }
 
     private fun transitionListener(){
@@ -106,9 +118,20 @@ class FavouriteFragment: Fragment(), FavouriteController.EpoxySearchAdapterCallb
             }
         )
     }
+    private fun setClickListeners(){
+        rootView.back.setOnClickListener(this)
+    }
 
     override fun animeTitleClick(model: FavouriteModel) {
         findNavController().navigate(FavouriteFragmentDirections.actionFavouriteFragmentToAnimeInfoFragment(categoryUrl = model.categoryUrl))
+    }
+
+    override fun onClick(v: View?) {
+        when(v?.id){
+            R.id.back ->{
+                findNavController().popBackStack()
+            }
+        }
     }
 
 }

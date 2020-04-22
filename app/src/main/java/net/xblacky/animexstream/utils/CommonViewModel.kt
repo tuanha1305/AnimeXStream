@@ -20,9 +20,9 @@ open class CommonViewModel : ViewModel() {
     var errorModel: LiveData<ErrorModel> = _errorModel
 
 
-    protected fun updateErrorModel(show: Boolean,e: Throwable?, isListEmpty: Boolean) {
 
-        var errorCode = C.ERROR_CODE_DEFAULT
+    protected fun updateErrorModel(show: Boolean,e: Throwable?, isListEmpty: Boolean) {
+        val errorCode: Int
         var errorMsgId = R.string.something_went_wrong
 
         if (e is HttpException) {
@@ -56,5 +56,6 @@ open class CommonViewModel : ViewModel() {
             isListEmpty
         )
     }
+
 
 }

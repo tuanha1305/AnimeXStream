@@ -12,28 +12,25 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import com.bumptech.glide.Glide
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.fragment_animeinfo.*
 import kotlinx.android.synthetic.main.fragment_animeinfo.view.*
 import kotlinx.android.synthetic.main.fragment_animeinfo.view.animeInfoRoot
-import kotlinx.android.synthetic.main.fragment_animeinfo_upper_placeholder.view.*
-import kotlinx.android.synthetic.main.fragment_animeinfor_lower_placeholder.view.*
+import kotlinx.android.synthetic.main.loading.view.*
 import net.xblacky.animexstream.R
 import net.xblacky.animexstream.ui.main.animeinfo.epoxy.AnimeInfoController
-import net.xblacky.animexstream.ui.main.home.HomeFragment
 import net.xblacky.animexstream.utils.ItemOffsetDecoration
 import net.xblacky.animexstream.utils.Tags.GenreTags
+import net.xblacky.animexstream.utils.Utils
 import net.xblacky.animexstream.utils.model.AnimeInfoModel
-import timber.log.Timber
 
 class AnimeInfoFragment : Fragment() {
 
     private lateinit var rootView: View
+    private lateinit var viewModelFactory: AnimeInfoViewModelFactory
     private lateinit var viewModel: AnimeInfoViewModel
     private lateinit var episodeController: AnimeInfoController
 
-    companion object {
-        fun newInstance() = HomeFragment()
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,55 +38,41 @@ class AnimeInfoFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         rootView = inflater.inflate(R.layout.fragment_animeinfo, container, false)
-        viewModel = ViewModelProvider(this).get(AnimeInfoViewModel::class.java)
-        getBundleData()
+        viewModelFactory = AnimeInfoViewModelFactory(AnimeInfoFragmentArgs.fromBundle(arguments!!).categoryUrl!!)
+        viewModel = ViewModelProvider(this, viewModelFactory).get(AnimeInfoViewModel::class.java)
         setupRecyclerView()
         setObserver()
         transitionListener()
         setOnClickListeners()
-        viewModel.fetchAnimeInfo()
         return rootView
     }
 
 
-    private fun getBundleData(){
-        val args =AnimeInfoFragmentArgs.fromBundle(bundle = arguments!!)
-        viewModel.setUrl(args.categoryUrl!!)
-    }
 
     private fun setObserver() {
         viewModel.animeInfoModel.observe(viewLifecycleOwner, Observer {
             it?.let {
-                rootView.animeInfoRoot.visibility = View.VISIBLE
                 updateViews(it)
             }
         })
 
         viewModel.episodeList.observe(viewLifecycleOwner, Observer {
             it?.let {
+                rootView.animeInfoRoot.visibility = View.VISIBLE
                 episodeController.setData(it)
             }
         })
 
-        viewModel.animeInfoLoading.observe(viewLifecycleOwner, Observer {
-            if(it){
-                rootView.animeInfoUpperShimmer.startShimmer()
-                rootView.animeInfoUpperShimmer.visibility = View. VISIBLE
+        viewModel.isLoading.observe(viewLifecycleOwner, Observer {
+
+            if(it.isLoading){
+                rootView.loading.visibility = View.VISIBLE
             }else{
-                rootView.animeInfoUpperShimmer.stopShimmer()
-                rootView.animeInfoUpperShimmer.visibility = View. GONE
+                rootView.loading.visibility = View.GONE
             }
         })
 
-        viewModel.episodeLoading.observe(viewLifecycleOwner, Observer {
-            if(it){
-                rootView.episodeShimmer.startShimmer()
-                rootView.episodeShimmer.visibility = View. VISIBLE
-            }else{
-                rootView.episodeShimmer.stopShimmer()
-                rootView.episodeShimmer.visibility = View. GONE
-            }
-        })
+
 
         viewModel.isFavourite.observe(viewLifecycleOwner, Observer {
             if(it){
@@ -120,12 +103,12 @@ class AnimeInfoFragment : Fragment() {
 
     private fun setupRecyclerView(){
         episodeController = AnimeInfoController()
-        episodeController.spanCount = 3
+        episodeController.spanCount = Utils.calculateNoOfColumns(context!!, 150f)
         rootView.animeInfoRecyclerView.adapter = episodeController.adapter
         val itemOffsetDecoration = ItemOffsetDecoration(context, R.dimen.episode_offset_left)
         rootView.animeInfoRecyclerView.addItemDecoration(itemOffsetDecoration)
         rootView.animeInfoRecyclerView.apply {
-            layoutManager = GridLayoutManager(context,3)
+            layoutManager = GridLayoutManager(context,Utils.calculateNoOfColumns(context!!, 150f))
             (layoutManager as GridLayoutManager).spanSizeLookup = episodeController.spanSizeLookup
 
         }
@@ -176,6 +159,11 @@ class AnimeInfoFragment : Fragment() {
     }
 
     private fun onFavouriteClick(){
+        if(viewModel.isFavourite.value!!){
+            Snackbar.make(rootView, getText(R.string.removed_from_favourites), Snackbar.LENGTH_SHORT).show()
+        }else{
+            Snackbar.make(rootView, getText(R.string.added_to_favourites), Snackbar.LENGTH_SHORT).show()
+        }
         viewModel.toggleFavourite()
     }
 

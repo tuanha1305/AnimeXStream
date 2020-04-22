@@ -21,33 +21,25 @@ abstract class EpisodeModel : EpoxyModelWithHolder<EpisodeModel.HomeHeaderHolder
     @EpoxyAttribute
     lateinit var clickListener: View.OnClickListener
     @EpoxyAttribute
-    var watched: Boolean = false
-    @EpoxyAttribute
     var watchedProgress: Long = 0
 
 
     override fun bind(holder: HomeHeaderHolder) {
         super.bind(holder)
         holder.episodeText.text = episodeModel.episodeNumber
-//        holder.episodeType.text = "| "
         holder.cardView.setOnClickListener(clickListener)
-        holder.progressBar.progress = watchedProgress.toInt()
-        if(watched){
-            holder.cardView.setCardBackgroundColor(ResourcesCompat.getColor(holder.cardView.resources, R.color.episode_background, null))
-        }else{
-            holder.cardView.setCardBackgroundColor(ResourcesCompat.getColor(holder.cardView.resources, android.R.color.white, null))
-        }
+        holder.progressBar.progress = if(watchedProgress >90) 100  else if(watchedProgress in 1..10) 10 else watchedProgress.toInt()
+        holder.cardView.setCardBackgroundColor(ResourcesCompat.getColor(holder.cardView.resources, R.color.episode_background, null))
+
     }
 
     class HomeHeaderHolder : EpoxyHolder(){
         lateinit var episodeText: TextView
-//        lateinit var episodeType: TextView
         lateinit var cardView: CardView
         lateinit var progressBar: ProgressBar
 
         override fun bindView(itemView: View) {
             episodeText = itemView.episodeNumber
-//            episodeType = itemView.episodeType
             cardView = itemView.cardView
             progressBar = itemView.watchedProgress
         }

@@ -7,25 +7,29 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
-import android.provider.MediaStore
-import android.util.Log
+import android.support.v4.media.session.MediaSessionCompat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.audio.AudioAttributes
+import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
+import com.google.android.exoplayer2.source.ExtractorMediaSource
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.TrackGroupArray
+import com.google.android.exoplayer2.source.dash.DashMediaSource
+import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource
 import com.google.android.exoplayer2.source.hls.HlsDataSourceFactory
 import com.google.android.exoplayer2.source.hls.HlsMediaSource
 import com.google.android.exoplayer2.trackselection.*
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.TrackSelectionDialogBuilder
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
-import com.google.android.exoplayer2.upstream.HttpDataSource
+import com.google.android.exoplayer2.upstream.*
+import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException
 import kotlinx.android.synthetic.main.error_screen_video_player.view.*
 import kotlinx.android.synthetic.main.exo_player_custom_controls.*
 import kotlinx.android.synthetic.main.exo_player_custom_controls.view.*
@@ -33,8 +37,12 @@ import kotlinx.android.synthetic.main.fragment_video_player.*
 import kotlinx.android.synthetic.main.fragment_video_player.view.*
 import kotlinx.android.synthetic.main.fragment_video_player_placeholder.view.*
 import net.xblacky.animexstream.R
+import net.xblacky.animexstream.utils.constants.C.Companion.ERROR_CODE_DEFAULT
+import net.xblacky.animexstream.utils.constants.C.Companion.NO_INTERNET_CONNECTION
+import net.xblacky.animexstream.utils.constants.C.Companion.RESPONSE_UNKNOWN
 import net.xblacky.animexstream.utils.model.Content
 import timber.log.Timber
+import java.io.IOException
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
@@ -51,6 +59,8 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
     private lateinit var player: SimpleExoPlayer
     private lateinit var trackSelectionFactory: TrackSelection.Factory
     private var trackSelector: DefaultTrackSelector? = null
+    private lateinit var mediaSession: MediaSessionCompat
+    private lateinit var mediaSessionConnector: MediaSessionConnector
 
     private var mappedTrackInfo: MappingTrackSelector.MappedTrackInfo? = null
     private lateinit var audioManager: AudioManager
@@ -60,6 +70,7 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
     private val DUCK_MEDIA_VOLUME = 0.2f
     private lateinit var handler: Handler
     private var isFullScreen = false
+    private var isVideoPlaying: Boolean = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -73,6 +84,11 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
         initializePlayer()
         retainInstance = true
         return rootView
+    }
+
+    override fun onStart() {
+        super.onStart()
+        registerMediaSession()
     }
 
     override fun onDestroy() {
@@ -114,21 +130,34 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
 
     private fun buildMediaSource(uri: Uri): MediaSource {
 
-        return HlsMediaSource.Factory(
-            HlsDataSourceFactory {
-                val dataSource: HttpDataSource =
-                    DefaultHttpDataSource("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36")
-                dataSource.setRequestProperty("Referer", "https://vidstreaming.io/")
-                dataSource
-            })
-            .setAllowChunklessPreparation(true)
-            .createMediaSource(uri)
+
+        val lastPath = uri.lastPathSegment
+        val defaultDataSourceFactory = DefaultHttpDataSourceFactory("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36")
+
+        if(lastPath!!.contains("m3u8")){
+            return HlsMediaSource.Factory(
+                HlsDataSourceFactory {
+                    val dataSource: HttpDataSource =
+                        DefaultHttpDataSource("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36")
+                    dataSource.setRequestProperty("Referer", "https://vidstreaming.io/")
+                    dataSource
+                })
+                .setAllowChunklessPreparation(true)
+                .createMediaSource(uri)
+        }else{
+//            val dashChunkSourceFactory = DefaultDashChunkSource.Factory(defaultDataSourceFactory)
+            return ExtractorMediaSource.Factory(defaultDataSourceFactory)
+                .createMediaSource(uri)
+        }
+
     }
 
     fun updateContent(content: Content) {
+        Timber.e("Content Updated uRL: ${content.url}")
         this.content = content
-        updateVideoUrl(URLDecoder.decode(content.url, StandardCharsets.UTF_8.name()))
         episodeName.text = content.episodeName
+        exoPlayerView.videoSurfaceView.visibility =View.GONE
+
         this.content.nextEpisodeUrl?.let {
             nextEpisode.visibility = View.VISIBLE
         } ?: kotlin.run {
@@ -138,6 +167,11 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
             previousEpisode.visibility = View.VISIBLE
         } ?: kotlin.run {
             previousEpisode.visibility = View.GONE
+        }
+        if(!content.url.isNullOrEmpty()){
+            updateVideoUrl(URLDecoder.decode(content.url, StandardCharsets.UTF_8.name()))
+        }else{
+            showErrorLayout(show = true, errorCode = RESPONSE_UNKNOWN, errorMsgId = R.string.server_error)
         }
 
     }
@@ -170,7 +204,7 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
                 refreshData()
             }
             R.id.back -> {
-                activity?.finish()
+                (activity as VideoPlayerActivity).enterPipModeOrExit()
             }
             R.id.nextEpisode -> {
                 playNextEpisode()
@@ -181,10 +215,11 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
         }
     }
 
+
     private fun toggleFullView() {
         if (isFullScreen) {
-            exoPlayerFrameLayout.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT
-            exoPlayerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT
+            exoPlayerFrameLayout.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+            exoPlayerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
             player.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
             isFullScreen = false
             context?.let {
@@ -213,24 +248,14 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
     }
 
     private fun refreshData() {
-        if (::content.isInitialized) {
+        if (::content.isInitialized && !content.url.isNullOrEmpty()) {
             loadVideo(player.currentPosition, true)
+        } else {
+            (activity as VideoPlayerActivity).refreshM3u8Url()
         }
 
     }
 
-
-//    override fun onConfigurationChanged(newConfig: Configuration) {
-//        super.onConfigurationChanged(newConfig)
-//
-//        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-//            goLandscapeMode()
-//
-//        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-//            goPortraitMode()
-//
-//        }
-//    }
 
     private fun playNextEpisode() {
         playOrPausePlayer(playWhenReady = false, loseAudioFocus = false)
@@ -248,7 +273,7 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
 
     }
 
-    private fun showLoading(showLoading: Boolean) {
+    fun showLoading(showLoading: Boolean) {
         if (::rootView.isInitialized) {
             if (showLoading) {
                 rootView.videoPlayerLoading.visibility = View.VISIBLE
@@ -259,44 +284,40 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
     }
 
 
-//    private fun updateScreenMode() {
-//        val orientation = activity?.resources?.configuration?.orientation
-//        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-//            goPortraitMode()
-//        } else if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-//            goLandscapeMode()
-//        }
-//    }
-//
-//    private fun goLandscapeMode() {
-//        addFullScreenFlags()
-//        addFullScreenParams()
-//        rootView.exo_full_Screen.setImageResource(R.drawable.ic_minimize)
-//    }
-//
-//    private fun goPortraitMode() {
-//        clearFullScreenFlags()
-//        clearFullScreenParams()
-//        rootView.exo_full_Screen.setImageResource(R.drawable.ic_maximize)
-//    }
-
-
-    private fun showErrorLayout(show: Boolean, errorMsgId: Int, errorCode: Int) {
+    fun showErrorLayout(show: Boolean, errorMsgId: Int, errorCode: Int) {
         if (show) {
             rootView.errorLayout.visibility = View.VISIBLE
             context.let {
                 rootView.errorText.text = getString(errorMsgId)
-//                when (errorCode) {
-//                    CONSTANTS.RESPONSE_SERVER_ERROR -> {
-//                        rootView.errorImage.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.ic_server_48_dp, null))
-//                    }
-//                    CONSTANTS.RESPONSE_UNKNOWN -> {
-//                        rootView.errorImage.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.ic_report_problem_black_48_px, null))
-//                    }
-//                    CONSTANTS.RESPONSE_INTERNET_ERROR -> {
-//                        rootView.errorImage.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.ic_internet, null))
-//                    }
-//                }
+                when (errorCode) {
+                    ERROR_CODE_DEFAULT -> {
+                        rootView.errorImage.setImageDrawable(
+                            ResourcesCompat.getDrawable(
+                                resources,
+                                R.drawable.ic_error,
+                                null
+                            )
+                        )
+                    }
+                    RESPONSE_UNKNOWN -> {
+                        rootView.errorImage.setImageDrawable(
+                            ResourcesCompat.getDrawable(
+                                resources,
+                                R.drawable.ic_error,
+                                null
+                            )
+                        )
+                    }
+                    NO_INTERNET_CONNECTION -> {
+                        rootView.errorImage.setImageDrawable(
+                            ResourcesCompat.getDrawable(
+                                resources,
+                                R.drawable.ic_internet,
+                                null
+                            )
+                        )
+                    }
+                }
             }
         } else {
             rootView.errorLayout.visibility = View.GONE
@@ -304,56 +325,20 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
     }
 
 
-//    private fun addFullScreenFlags() {
-//        activity?.let {
-//            it.window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-//                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-//                    or View.SYSTEM_UI_FLAG_FULLSCREEN)
-//
-//        }
-//    }
-//
-//    private fun clearFullScreenFlags() {
-//        activity?.let {
-//            it.window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !sharedPreference.nightMode) {
-//                it.window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-//            }
-//        }
-//    }
-
-//    private fun setUnspecifiedOrientation() {
-//
-//
-//        if (isAutoRotateOn()) {
-//            if (::handler.isInitialized) {
-//                handler.removeCallbacksAndMessages(null)
-//            } else {
-//                handler = Handler()
-//            }
-//            handler.postDelayed({
-//                activity?.let {
-//                    it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-//                }
-//            }, 5000)
-//        }
-//    }
-
-
-//    private fun isAutoRotateOn(): Boolean {
-//        return Settings.System.getInt(context?.contentResolver, Settings.System.ACCELEROMETER_ROTATION, 0) == 1
-//    }
-
-
     private fun showDialog() {
         mappedTrackInfo = trackSelector?.currentMappedTrackInfo
-        TrackSelectionDialogBuilder(
-            context,
-            "Video Quality",
-            trackSelector,
-            0
 
-        ).build().show()
+        try {
+            TrackSelectionDialogBuilder(
+                context,
+                getString(R.string.video_quality),
+                trackSelector,
+                0
+
+            ).build().show()
+        } catch (ignored: java.lang.NullPointerException) {
+        }
+
 
     }
 
@@ -371,21 +356,52 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
 
     }
 
-    override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
-        if (playbackState == Player.STATE_READY) {
-            showLoading(false)
-        }
-        if (playbackState == Player.STATE_IDLE) {
-            //Todo Update Error Screen
+    override fun onPlayerError(error: ExoPlaybackException?) {
+        isVideoPlaying = false
+        if (error!!.type === ExoPlaybackException.TYPE_SOURCE) {
+            val cause: IOException = error!!.sourceException
+            if (cause is HttpDataSource.HttpDataSourceException) {
+                // An HTTP error occurred.
+                val httpError: HttpDataSource.HttpDataSourceException = cause
+                // This is the request for which the error occurred.
+                // querying the cause.
+                if (httpError is InvalidResponseCodeException) {
+                    val responseCode = httpError.responseCode
+                        content.url = ""
+                    showErrorLayout(
+                        show = true,
+                        errorMsgId = R.string.server_error,
+                        errorCode = RESPONSE_UNKNOWN
+                    )
 
-//            unRegisterMediaSession()
-//            showErrorLayout(true, R.string.status_code_default, CONSTANTS.RESPONSE_SERVER_ERROR)
+                    Timber.e("Response Code $responseCode")
+                    // message and headers.
+                } else {
+                    showErrorLayout(
+                        show = true,
+                        errorMsgId = R.string.no_internet,
+                        errorCode = NO_INTERNET_CONNECTION
+                    )
+                }
+            }
         }
-        if(playbackState == Player.STATE_BUFFERING){
+    }
+
+    override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
+        isVideoPlaying = playWhenReady
+        if (playbackState == Player.STATE_READY  && playWhenReady) {
+            rootView.exo_play.setImageResource(R.drawable.ic_media_play)
+            rootView.exo_pause.setImageResource(R.drawable.ic_media_pause)
+            playOrPausePlayer(true)
+
+        }
+        if (playbackState == Player.STATE_BUFFERING  && playWhenReady) {
+            rootView.exo_play.setImageResource(0)
+            rootView.exo_pause.setImageResource(0)
             showLoading(false)
         }
-        if (playbackState == Player.STATE_READY && playWhenReady) {
-            playOrPausePlayer(true)
+        if (playbackState == Player.STATE_READY) {
+            exoPlayerView.videoSurfaceView.visibility = View.VISIBLE
         }
     }
 
@@ -448,7 +464,7 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
         }
     }
 
-    private fun playOrPausePlayer(playWhenReady: Boolean, loseAudioFocus: Boolean = true) {
+    fun playOrPausePlayer(playWhenReady: Boolean, loseAudioFocus: Boolean = true) {
         if (playWhenReady && requestAudioFocus()) {
             player.playWhenReady = true
             activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -463,11 +479,11 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
 
     override fun onStop() {
         saveWatchedDuration()
-        if(::content.isInitialized){
+        if (::content.isInitialized) {
             (activity as VideoPlayerListener).updateWatchedValue(content)
         }
         playOrPausePlayer(false)
-//        unRegisterMediaSession()
+        unRegisterMediaSession()
         super.onStop()
     }
 
@@ -490,44 +506,43 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
         }
     }
 
-//    private fun registerMediaSession() {
-//        mediaSession = MediaSessionCompat(context, TAG)
+    private fun registerMediaSession() {
+        mediaSession = MediaSessionCompat(context, TAG)
 //        if (::content.isInitialized) {
 //
-//            val mediaMetadataCompat = MediaMetadataCompat.Builder()
-//                    .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE, content.title)
-//                    .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_SUBTITLE, resources.getString(R.string.app_name))
-////                    .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, BitmapFactory.decodeResource(resources, R.drawable.app_icon))
-//                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, content.title)
-//                    .build()
-//
-//            mediaSession.setMetadata(mediaMetadataCompat)
+////            val mediaMetadataCompat = MediaMetadataCompat.Builder()
+////                    .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE, content.title)
+////                    .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_SUBTITLE, resources.getString(R.string.app_name))
+//////                    .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, BitmapFactory.decodeResource(resources, R.drawable.app_icon))
+////                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, content.title)
+////                    .build()
+////
+////            mediaSession.setMetadata(mediaMetadataCompat)
 //        }
-//        mediaSessionConnector = MediaSessionConnector(mediaSession)
-//        mediaSessionConnector.setPlayer(player)
-//    }
+        mediaSession.isActive = true
+        mediaSessionConnector = MediaSessionConnector(mediaSession)
+        mediaSessionConnector.setPlayer(player)
+    }
 
-//    private fun unRegisterMediaSession() {
-//        mediaSession.release()
-//        mediaSessionConnector.setPlayer(null)
-//    }
+    private fun unRegisterMediaSession() {
+        mediaSession.release()
+        mediaSessionConnector.setPlayer(null)
+    }
 
-    private fun saveWatchedDuration() {
-        if(::content.isInitialized){
+     fun saveWatchedDuration() {
+        if (::content.isInitialized) {
             val watchedDuration = player.currentPosition
             content.duration = player.duration
             content.watchedDuration = watchedDuration
-
-            (activity as VideoPlayerListener).updateWatchedValue(content)
+            if (watchedDuration > 0) {
+                (activity as VideoPlayerListener).updateWatchedValue(content)
+            }
         }
     }
 
-
-    override fun onStart() {
-        super.onStart()
-//        registerMediaSession()
+    fun isVideoPlaying(): Boolean{
+        return isVideoPlaying
     }
-
 
 }
 

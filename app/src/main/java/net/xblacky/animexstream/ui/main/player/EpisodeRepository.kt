@@ -4,6 +4,7 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import io.realm.Realm
+import net.xblacky.animexstream.utils.constants.C
 import net.xblacky.animexstream.utils.rertofit.NetworkInterface
 import net.xblacky.animexstream.utils.rertofit.RetrofitHelper
 import net.xblacky.animexstream.utils.model.Content
@@ -31,6 +32,7 @@ class EpisodeRepository {
             .observeOn(AndroidSchedulers.mainThread())
     }
 
+
     fun fetchWatchedDuration(id: Int): WatchedEpisode?{
         return realm.where(WatchedEpisode::class.java).equalTo("id", id).findFirst()
     }
@@ -44,8 +46,7 @@ class EpisodeRepository {
             }
             Timber.e("ID : %s", content?.episodeUrl.hashCode())
             val watchedEpisode = fetchWatchedDuration(content?.episodeUrl.hashCode())
-            content?.watchedDuration = watchedEpisode?.watchedDuration?.let {
-                    it
+            content?.watchedDuration = watchedEpisode?.watchedDuration?.let { it
             } ?: 0
             return content
 
@@ -55,17 +56,15 @@ class EpisodeRepository {
         return null
     }
 
+
     fun saveContent(content: Content){
         try {
             content.insertionTime = System.currentTimeMillis()
-            realm.executeTransaction { realm1: Realm ->
+            realm.executeTransactionAsync { realm1: Realm ->
                 realm1.insertOrUpdate(content)
             }
 
-            Timber.e("Watched Duration: ${content.watchedDuration}")
-            Timber.e("Total Duration: ${content.duration}")
             val progressPercentage: Long = ((content.watchedDuration.toDouble()/(content.duration).toDouble()) * 100).toLong()
-            Timber.e("Progress Percentage: $progressPercentage")
             val watchedEpisode = WatchedEpisode(
                 id = content.episodeUrl.hashCode(),
                 watchedDuration = content.watchedDuration,
@@ -73,10 +72,18 @@ class EpisodeRepository {
                 animeName = content.animeName
 
             )
-            realm.executeTransaction {
+            realm.executeTransactionAsync {
                 it.insertOrUpdate(watchedEpisode)
             }
         } catch (ignored: Exception) {
         }
+    }
+
+
+    fun clearContent(){
+            realm.executeTransactionAsync {
+                val results = it.where(Content::class.java).lessThanOrEqualTo("insertionTime", System.currentTimeMillis() - C.MAX_TIME_M3U8_URL).findAll()
+                results.deleteAllFromRealm()
+            }
     }
 }

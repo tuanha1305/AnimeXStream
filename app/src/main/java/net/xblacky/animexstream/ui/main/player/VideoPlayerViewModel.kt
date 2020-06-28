@@ -1,5 +1,6 @@
 package net.xblacky.animexstream.ui.main.player
 
+import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import io.reactivex.disposables.CompositeDisposable
@@ -10,9 +11,10 @@ import net.xblacky.animexstream.utils.model.Content
 import net.xblacky.animexstream.utils.parser.HtmlParser
 import okhttp3.ResponseBody
 
-class VideoPlayerViewModel : CommonViewModel() {
+class VideoPlayerViewModel @ViewModelInject constructor(
+    private val episodeRepository: EpisodeRepository
+) : CommonViewModel() {
 
-    private val episodeRepository = EpisodeRepository()
     private var compositeDisposable = CompositeDisposable()
     private var _content = MutableLiveData<Content>(Content())
     var liveContent: LiveData<Content> = _content

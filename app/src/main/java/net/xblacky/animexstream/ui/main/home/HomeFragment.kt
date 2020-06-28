@@ -8,10 +8,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import dagger.hilt.android.AndroidEntryPoint
 import net.xblacky.animexstream.BuildConfig
 import net.xblacky.animexstream.R
 import net.xblacky.animexstream.databinding.FragmentHomeBinding
@@ -20,10 +21,11 @@ import net.xblacky.animexstream.utils.constants.Const
 import net.xblacky.animexstream.utils.model.AnimeMetaModel
 import timber.log.Timber
 
+@AndroidEntryPoint
 class HomeFragment : Fragment(), View.OnClickListener, HomeController.EpoxyAdapterCallbacks {
 
     private var doubleClickLastTime = 0L
-    private lateinit var viewModel: HomeViewModel
+    private val viewModel: HomeViewModel by viewModels()
     private val homeController by lazy {
         HomeController(this)
     }
@@ -45,7 +47,6 @@ class HomeFragment : Fragment(), View.OnClickListener, HomeController.EpoxyAdapt
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        viewModel = ViewModelProvider(this).get(HomeViewModel::class.java)
         viewModelObserver()
     }
 
@@ -117,7 +118,7 @@ class HomeFragment : Fragment(), View.OnClickListener, HomeController.EpoxyAdapt
     }
 
     private fun showDialog(whatsNew: String) {
-        AlertDialog.Builder(context!!).setTitle("New Update Available")
+        AlertDialog.Builder(requireContext()).setTitle("New Update Available")
             .setMessage("What's New ! \n$whatsNew")
             .setCancelable(false)
             .setPositiveButton("Update") { _, _ ->

@@ -13,12 +13,13 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView.OnEditorActionListener
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
 import net.xblacky.animexstream.R
 import net.xblacky.animexstream.databinding.FragmentSearchBinding
 import net.xblacky.animexstream.databinding.LoadingBinding
@@ -28,15 +29,16 @@ import net.xblacky.animexstream.utils.ItemOffsetDecoration
 import net.xblacky.animexstream.utils.Utils
 import net.xblacky.animexstream.utils.model.AnimeMetaModel
 
+@AndroidEntryPoint
 class SearchFragment : Fragment(), View.OnClickListener,
     SearchController.EpoxySearchAdapterCallbacks {
 
-    private lateinit var viewModel: SearchViewModel
+    private val viewModel: SearchViewModel by viewModels()
     private val searchController by lazy {
         SearchController(this)
     }
 
-    private lateinit var searchbinding: FragmentSearchBinding
+    private lateinit var searchBinding: FragmentSearchBinding
     private lateinit var loadingBinding: LoadingBinding
 
     override fun onCreateView(
@@ -44,8 +46,8 @@ class SearchFragment : Fragment(), View.OnClickListener,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        searchbinding = FragmentSearchBinding.inflate(inflater, container, false)
-        loadingBinding = LoadingBinding.inflate(inflater, searchbinding.root)
+        searchBinding = FragmentSearchBinding.inflate(inflater, container, false)
+        loadingBinding = LoadingBinding.inflate(inflater, searchBinding.root)
 
         setOnClickListeners()
         setAdapters()
@@ -53,20 +55,19 @@ class SearchFragment : Fragment(), View.OnClickListener,
         setEditTextListener()
         showKeyBoard()
 
-        return searchbinding.root
+        return searchBinding.root
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        viewModel = ViewModelProvider(this).get(SearchViewModel::class.java)
         setObserver()
     }
 
     private fun setEditTextListener() {
-        searchbinding.searchEditText.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
+        searchBinding.searchEditText.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH || event.action == KeyEvent.ACTION_DOWN) {
                 hideKeyBoard()
-                searchbinding.searchEditText.clearFocus()
+                searchBinding.searchEditText.clearFocus()
                 viewModel.fetchSearchList(v.text.toString().trim())
                 return@OnEditorActionListener true
             }
@@ -75,22 +76,19 @@ class SearchFragment : Fragment(), View.OnClickListener,
     }
 
     private fun setOnClickListeners() {
-        searchbinding.backButton.setOnClickListener(this)
+        searchBinding.backButton.setOnClickListener(this)
     }
 
     private fun setAdapters() {
-        searchController.spanCount = Utils.calculateNoOfColumns(context!!, 150f)
-        searchbinding.searchRecyclerView.apply {
-            layoutManager = GridLayoutManager(context, Utils.calculateNoOfColumns(context!!, 150f))
+        searchController.spanCount = Utils.calculateNoOfColumns(requireContext(), 150f)
+        searchBinding.searchRecyclerView.apply {
+            layoutManager = GridLayoutManager(context, Utils.calculateNoOfColumns(requireContext(), 150f))
             adapter = searchController.adapter
             (layoutManager as GridLayoutManager).spanSizeLookup = searchController.spanSizeLookup
         }
 
-        searchbinding.searchRecyclerView.addItemDecoration(
-            ItemOffsetDecoration(
-                context,
-                R.dimen.episode_offset_left
-            )
+        searchBinding.searchRecyclerView.addItemDecoration(
+            ItemOffsetDecoration(context, R.dimen.episode_offset_left)
         )
     }
 
@@ -165,10 +163,10 @@ class SearchFragment : Fragment(), View.OnClickListener,
     }
 
     private fun setRecyclerViewScroll() {
-        searchbinding.searchRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+        searchBinding.searchRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                val layoutManger = searchbinding.searchRecyclerView.layoutManager as GridLayoutManager
+                val layoutManger = searchBinding.searchRecyclerView.layoutManager as GridLayoutManager
                 val visibleItemCount = layoutManger.childCount
                 val totalItemCount = layoutManger.itemCount
                 val firstVisibleItemPosition = layoutManger.findFirstVisibleItemPosition()

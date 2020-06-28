@@ -35,6 +35,7 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.error_screen_video_player.view.*
 import kotlinx.android.synthetic.main.exo_player_custom_controls.*
 import kotlinx.android.synthetic.main.exo_player_custom_controls.view.*
@@ -51,6 +52,7 @@ import java.io.IOException
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
+@AndroidEntryPoint
 class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListener,
     AudioManager.OnAudioFocusChangeListener {
 
@@ -363,7 +365,7 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
 
     // show dialog to select the speed.
     private fun showDialogForSpeedSelection() {
-        val builder = AlertDialog.Builder(context!!)
+        val builder = AlertDialog.Builder(requireContext())
         builder.apply {
             setTitle("Set your playback speed")
             setSingleChoiceItems(showableSpeed, checkedItem) { _, which ->

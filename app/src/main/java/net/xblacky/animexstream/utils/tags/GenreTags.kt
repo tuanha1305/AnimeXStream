@@ -1,4 +1,4 @@
-package net.xblacky.animexstream.utils.Tags
+package net.xblacky.animexstream.utils.tags
 
 import android.content.Context
 import android.view.LayoutInflater

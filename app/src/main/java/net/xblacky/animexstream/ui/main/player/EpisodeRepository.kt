@@ -6,17 +6,16 @@ import io.reactivex.schedulers.Schedulers
 import io.realm.Realm
 import net.xblacky.animexstream.utils.constants.Const
 import net.xblacky.animexstream.utils.rertofit.NetworkInterface
-import net.xblacky.animexstream.utils.rertofit.RetrofitHelper
 import net.xblacky.animexstream.utils.model.Content
 import net.xblacky.animexstream.utils.model.WatchedEpisode
-import net.xblacky.animexstream.utils.realm.InitializeRealm
 import okhttp3.ResponseBody
 import retrofit2.Retrofit
 import timber.log.Timber
 
-class EpisodeRepository {
-    private var retrofit: Retrofit = RetrofitHelper.getRetrofitInstance()!!
-    private var realm = Realm.getInstance(InitializeRealm.getConfig())
+class EpisodeRepository(
+    private val retrofit: Retrofit,
+    private val realm: Realm
+) {
 
     fun fetchEpisodeMediaUrl(url: String): Observable<ResponseBody> {
         val mediaUrlService = retrofit.create(NetworkInterface.FetchEpisodeMediaUrl::class.java)

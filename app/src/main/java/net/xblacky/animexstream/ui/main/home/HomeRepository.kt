@@ -7,15 +7,12 @@ import io.realm.Realm
 import io.realm.Sort
 import net.xblacky.animexstream.utils.constants.Const
 import net.xblacky.animexstream.utils.rertofit.NetworkInterface
-import net.xblacky.animexstream.utils.rertofit.RetrofitHelper
 import net.xblacky.animexstream.utils.model.AnimeMetaModel
 import net.xblacky.animexstream.utils.realm.InitializeRealm
 import okhttp3.ResponseBody
 import retrofit2.Retrofit
 
-class HomeRepository {
-
-    private var retrofit: Retrofit = RetrofitHelper.getRetrofitInstance()!!
+class HomeRepository(private val retrofit: Retrofit) {
 
     fun fetchRecentSubOrDub(page: Int, type: Int): Observable<ResponseBody> {
         val fetchHomeListService = retrofit.create(NetworkInterface.FetchRecentSubOrDub::class.java)

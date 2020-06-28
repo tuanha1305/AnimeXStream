@@ -1,5 +1,6 @@
 package net.xblacky.animexstream.ui.main.search
 
+import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import io.reactivex.disposables.CompositeDisposable
@@ -10,14 +11,15 @@ import net.xblacky.animexstream.utils.model.AnimeMetaModel
 import net.xblacky.animexstream.utils.parser.HtmlParser
 import okhttp3.ResponseBody
 
-class SearchViewModel : CommonViewModel2() {
+class SearchViewModel @ViewModelInject constructor(
+    private val searchRepository: SearchRepository
+) : CommonViewModel2() {
 
-    private val searchRepository = SearchRepository()
     private var _searchList: MutableLiveData<ArrayList<AnimeMetaModel>> = MutableLiveData()
     private var pageNumber: Int = 1
     private lateinit var keyword: String
     private var _canNextPageLoaded = true
-    private var compositeDisposable: CompositeDisposable = CompositeDisposable()
+    private var compositeDisposable = CompositeDisposable()
     var searchList: LiveData<ArrayList<AnimeMetaModel>> = _searchList
 
     fun fetchSearchList(keyword: String) {

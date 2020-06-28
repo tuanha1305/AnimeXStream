@@ -14,7 +14,7 @@ import kotlinx.android.synthetic.main.recycler_anime_mini_header.view.*
 import kotlinx.android.synthetic.main.recycler_anime_popular.view.*
 import kotlinx.android.synthetic.main.recycler_anime_recent_sub_dub_2.view.*
 import net.xblacky.animexstream.R
-import net.xblacky.animexstream.utils.Tags.GenreTags
+import net.xblacky.animexstream.utils.tags.GenreTags
 import net.xblacky.animexstream.utils.model.AnimeMetaModel
 import org.apmem.tools.layouts.FlowLayout
 import kotlinx.android.synthetic.main.recycler_anime_popular.view.animeCardView as animeCardViewSubDub

@@ -18,7 +18,7 @@ import net.xblacky.animexstream.databinding.FragmentAnimeinfoBinding
 import net.xblacky.animexstream.databinding.LoadingBinding
 import net.xblacky.animexstream.ui.main.animeinfo.epoxy.AnimeInfoController
 import net.xblacky.animexstream.utils.ItemOffsetDecoration
-import net.xblacky.animexstream.utils.Tags.GenreTags
+import net.xblacky.animexstream.utils.tags.GenreTags
 import net.xblacky.animexstream.utils.Utils
 import net.xblacky.animexstream.utils.model.AnimeInfoModel
 
@@ -40,7 +40,7 @@ class AnimeInfoFragment : Fragment() {
     ): View? {
         animeInfoBinding = FragmentAnimeinfoBinding.inflate(inflater, container, false)
         loadingBinding = LoadingBinding.inflate(inflater, animeInfoBinding.root)
-        viewModelFactory = AnimeInfoViewModelFactory(AnimeInfoFragmentArgs.fromBundle(arguments!!).categoryUrl!!)
+        viewModelFactory = AnimeInfoViewModelFactory(AnimeInfoFragmentArgs.fromBundle(requireArguments()).categoryUrl!!)
         viewModel = ViewModelProvider(this, viewModelFactory).get(AnimeInfoViewModel::class.java)
 
         setupRecyclerView()
@@ -106,7 +106,7 @@ class AnimeInfoFragment : Fragment() {
         animeInfoBinding.flowLayout.removeAllViews()
         animeInfoModel.genre.forEach {
             animeInfoBinding.flowLayout.addView(
-                GenreTags(context!!).getGenreTag(
+                GenreTags(requireContext()).getGenreTag(
                     genreName = it.genreName
                 )
             )
@@ -119,15 +119,14 @@ class AnimeInfoFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        episodeController.spanCount = Utils.calculateNoOfColumns(context!!, 150f)
+        episodeController.spanCount = Utils.calculateNoOfColumns(requireContext(), 150f)
         animeInfoBinding.animeInfoRecyclerView.adapter = episodeController.adapter
 
         val itemOffsetDecoration = ItemOffsetDecoration(context, R.dimen.episode_offset_left)
         animeInfoBinding.animeInfoRecyclerView.addItemDecoration(itemOffsetDecoration)
         animeInfoBinding.animeInfoRecyclerView.apply {
-            layoutManager = GridLayoutManager(context, Utils.calculateNoOfColumns(context!!, 150f))
+            layoutManager = GridLayoutManager(context, Utils.calculateNoOfColumns(requireContext(), 150f))
             (layoutManager as GridLayoutManager).spanSizeLookup = episodeController.spanSizeLookup
-
         }
     }
 

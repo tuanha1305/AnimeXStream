@@ -7,10 +7,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
+import dagger.hilt.android.AndroidEntryPoint
 import net.xblacky.animexstream.R
 import net.xblacky.animexstream.databinding.FragmentFavouriteBinding
 import net.xblacky.animexstream.databinding.FragmentSearchBinding
@@ -19,11 +20,12 @@ import net.xblacky.animexstream.utils.ItemOffsetDecoration
 import net.xblacky.animexstream.utils.Utils
 import net.xblacky.animexstream.utils.model.FavouriteModel
 
+@AndroidEntryPoint
 class FavouriteFragment : Fragment(),
     FavouriteController.EpoxySearchAdapterCallbacks,
     View.OnClickListener {
 
-    private lateinit var viewModel: FavouriteViewModel
+    private val viewModel: FavouriteViewModel by viewModels()
     private val favouriteController by lazy {
         FavouriteController(this)
     }
@@ -48,7 +50,6 @@ class FavouriteFragment : Fragment(),
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        viewModel = ViewModelProvider(this).get(FavouriteViewModel::class.java)
         setObserver()
     }
 
@@ -70,9 +71,9 @@ class FavouriteFragment : Fragment(),
     }
 
     private fun setAdapters() {
-        favouriteController.spanCount = Utils.calculateNoOfColumns(context!!, 150f)
+        favouriteController.spanCount = Utils.calculateNoOfColumns(requireContext(), 150f)
         favouriteBinding.recyclerView.apply {
-            layoutManager = GridLayoutManager(context, Utils.calculateNoOfColumns(context!!, 150f))
+            layoutManager = GridLayoutManager(context, Utils.calculateNoOfColumns(requireContext(), 150f))
             adapter = favouriteController.adapter
             (layoutManager as GridLayoutManager).spanSizeLookup = favouriteController.spanSizeLookup
         }

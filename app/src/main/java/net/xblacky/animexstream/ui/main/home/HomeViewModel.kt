@@ -1,5 +1,6 @@
 package net.xblacky.animexstream.ui.main.home
 
+import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -21,9 +22,10 @@ import timber.log.Timber
 import java.lang.IndexOutOfBoundsException
 import kotlin.collections.ArrayList
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel @ViewModelInject constructor(
+    private val homeRepository: HomeRepository
+) : ViewModel() {
 
-    private val homeRepository = HomeRepository()
     private var _animeList: MutableLiveData<ArrayList<HomeScreenModel>> =
         MutableLiveData(makeEmptyArrayList())
     var animeList: LiveData<ArrayList<HomeScreenModel>> = _animeList

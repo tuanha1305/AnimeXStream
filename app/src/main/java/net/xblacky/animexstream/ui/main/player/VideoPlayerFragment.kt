@@ -17,19 +17,30 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.audio.AudioAttributes
+import com.google.android.exoplayer2.ext.cast.CastPlayer
+import com.google.android.exoplayer2.ext.cast.DefaultMediaItemConverter
+import com.google.android.exoplayer2.ext.cast.MediaItem
+import com.google.android.exoplayer2.ext.cast.SessionAvailabilityListener
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.source.ExtractorMediaSource
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.TrackGroupArray
-import com.google.android.exoplayer2.source.dash.DashMediaSource
-import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource
 import com.google.android.exoplayer2.source.hls.HlsDataSourceFactory
 import com.google.android.exoplayer2.source.hls.HlsMediaSource
 import com.google.android.exoplayer2.trackselection.*
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.TrackSelectionDialogBuilder
-import com.google.android.exoplayer2.upstream.*
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
+import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException
+import com.google.android.exoplayer2.util.MimeTypes
+import com.google.android.gms.cast.MediaInfo
+import com.google.android.gms.cast.MediaMetadata
+import com.google.android.gms.cast.MediaQueueItem
+import com.google.android.gms.cast.framework.CastButtonFactory
+import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.cast.framework.CastState
 import kotlinx.android.synthetic.main.error_screen_video_player.view.*
 import kotlinx.android.synthetic.main.exo_player_custom_controls.*
 import kotlinx.android.synthetic.main.exo_player_custom_controls.view.*
@@ -57,8 +68,9 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
     private lateinit var videoUrl: String
     private lateinit var rootView: View
     private lateinit var player: SimpleExoPlayer
-    private lateinit var trackSelectionFactory: TrackSelection.Factory
-    private var trackSelector: DefaultTrackSelector? = null
+    private val trackSelector: DefaultTrackSelector by lazy{
+         DefaultTrackSelector(AdaptiveTrackSelection.Factory())
+    }
     private lateinit var mediaSession: MediaSessionCompat
     private lateinit var mediaSessionConnector: MediaSessionConnector
 
@@ -71,6 +83,9 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
     private lateinit var handler: Handler
     private var isFullScreen = false
     private var isVideoPlaying: Boolean = false
+    private  lateinit var mCastContext: CastContext
+
+    private var isM3u8: Boolean = true
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -82,8 +97,14 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
         setClickListeners()
         initializeAudioManager()
         initializePlayer()
+        setupCast()
         retainInstance = true
         return rootView
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        mCastContext =  CastContext.getSharedInstance(requireContext())
+        super.onCreate(savedInstanceState)
     }
 
     override fun onStart() {
@@ -99,11 +120,62 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
         super.onDestroy()
     }
 
+    private fun setupCast(){
+        CastButtonFactory.setUpMediaRouteButton(context, rootView.exo_chromecast)
+
+        if (mCastContext.castState != CastState.NO_DEVICES_AVAILABLE) rootView.exo_chromecast.visibility =
+            View.VISIBLE
+
+        mCastContext.addCastStateListener { state ->
+            if (state == CastState.NO_DEVICES_AVAILABLE) rootView.exo_chromecast.visibility = View.GONE else {
+                if (rootView.exo_chromecast.visibility == View.GONE) rootView.exo_chromecast.visibility = View.VISIBLE
+            }
+        }
+
+        val castPlayer = CastPlayer(mCastContext)
+
+        castPlayer.setSessionAvailabilityListener(object : SessionAvailabilityListener {
+            override fun onCastSessionAvailable() {
+                castPlayer.loadItems(getMediaQueueItem(),0,player.currentPosition, Player.REPEAT_MODE_OFF)
+            }
+            override fun onCastSessionUnavailable(){
+                // Todo
+            }
+        })
+    }
+
+    private fun getMediaQueueItem(): Array<MediaQueueItem>{
+
+        val mediaItem =
+        MediaItem.Builder()
+            .setUri("https://hls13x.cdnfile.info/stream/bea1d5a172ef22dfef5088244558e3bc/beyblade-burst-super-king-episode-12.m3u8")
+            .setTitle(content.episodeName!!)
+            .setMimeType(MimeTypes.APPLICATION_M3U8)
+            .build()
+
+
+        Timber.e("Title: ${content.episodeName}")
+        Timber.e("Url: ${content.url}")
+        val mediaItemConverter = DefaultMediaItemConverter()
+       val item =  mediaItemConverter.toMediaQueueItem(mediaItem)
+        return arrayOf(item)
+    }
+
+    private fun buildMediaQueueItem(): Array<MediaQueueItem?>{
+        val movieMetadata = MediaMetadata(MediaMetadata.MEDIA_TYPE_MOVIE)
+        movieMetadata.putString(MediaMetadata.KEY_TITLE, content.episodeName)
+        val mediaInfo = MediaInfo.Builder(URLDecoder.decode(" https://hls13x.cdnfile.info/stream/bea1d5a172ef22dfef5088244558e3bc/beyblade-burst-super-king-episode-12.m3u8", StandardCharsets.UTF_8.name()).toString())
+            .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED).setContentType(MimeTypes.APPLICATION_M3U8)
+            .setMetadata(movieMetadata).build()
+        Timber.e("Title: ${content.episodeName}")
+        Timber.e("Url: ${content.url}")
+        return arrayOf<MediaQueueItem?>(MediaQueueItem.Builder(mediaInfo).build())
+    }
+
     private fun initializePlayer() {
         rootView.exoPlayerFrameLayout.setAspectRatio(16f / 9f)
-        trackSelectionFactory = AdaptiveTrackSelection.Factory()
-        trackSelector = DefaultTrackSelector(trackSelectionFactory)
-        player = ExoPlayerFactory.newSimpleInstance(context, trackSelector)
+
+        player = ExoPlayerFactory.newSimpleInstance(requireContext(), trackSelector)
 
         val audioAttributes: AudioAttributes = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
@@ -113,7 +185,7 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
         player.playWhenReady = true
         player.audioAttributes = audioAttributes
         player.addListener(this)
-        player.seekParameters = SeekParameters.CLOSEST_SYNC
+//        player.seekParameters = SeekParameters.CLOSEST_SYNC
         rootView.exoPlayerView.player = player
 
 
@@ -135,6 +207,7 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
         val defaultDataSourceFactory = DefaultHttpDataSourceFactory("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36")
 
         if(lastPath!!.contains("m3u8")){
+            isM3u8 = true
             return HlsMediaSource.Factory(
                 HlsDataSourceFactory {
                     val dataSource: HttpDataSource =
@@ -145,6 +218,7 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
                 .setAllowChunklessPreparation(true)
                 .createMediaSource(uri)
         }else{
+            isM3u8 = false
 //            val dashChunkSourceFactory = DefaultDashChunkSource.Factory(defaultDataSourceFactory)
             return ExtractorMediaSource.Factory(defaultDataSourceFactory)
                 .createMediaSource(uri)
@@ -153,10 +227,9 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
     }
 
     fun updateContent(content: Content) {
-        Timber.e("Content Updated uRL: ${content.url}")
         this.content = content
         episodeName.text = content.episodeName
-        exoPlayerView.videoSurfaceView.visibility =View.GONE
+        exoPlayerView.videoSurfaceView?.visibility =View.GONE
 
         this.content.nextEpisodeUrl?.let {
             nextEpisode.visibility = View.VISIBLE
@@ -177,8 +250,9 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
     }
 
     private fun updateVideoUrl(videoUrl: String) {
-        this.videoUrl = videoUrl
+        this.videoUrl = "https://vidstreaming.io/goto.php?url=aHR0cHM6LyURASDGHUSRFSJGYfdsffsderFStewthsfSFtrftesdf9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL2RvdWJsZS1iYWxtLTI3MDcwNi9mb2xkZXI1Mi8yM2FfMTU5MTk3NTEwMjQxNDU2Lm1wNA=="
         loadVideo(seekTo = content.watchedDuration)
+        Timber.e("Updated Url: $videoUrl")
     }
 
     private fun loadVideo(seekTo: Long? = 0, playWhenReady: Boolean = true) {
@@ -330,9 +404,9 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
 
         try {
             TrackSelectionDialogBuilder(
-                context,
+                requireContext(),
                 getString(R.string.video_quality),
-                trackSelector,
+                trackSelector!!,
                 0
 
             ).build().show()
@@ -343,8 +417,8 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
     }
 
     override fun onTracksChanged(
-        trackGroups: TrackGroupArray?,
-        trackSelections: TrackSelectionArray?
+        trackGroups: TrackGroupArray,
+        trackSelections: TrackSelectionArray
     ) {
         try {
 
@@ -356,7 +430,7 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
 
     }
 
-    override fun onPlayerError(error: ExoPlaybackException?) {
+    override fun onPlayerError(error: ExoPlaybackException) {
         isVideoPlaying = false
         if (error!!.type === ExoPlaybackException.TYPE_SOURCE) {
             val cause: IOException = error!!.sourceException
@@ -401,7 +475,7 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
             showLoading(false)
         }
         if (playbackState == Player.STATE_READY) {
-            exoPlayerView.videoSurfaceView.visibility = View.VISIBLE
+            exoPlayerView.videoSurfaceView?.visibility = View.VISIBLE
         }
     }
 

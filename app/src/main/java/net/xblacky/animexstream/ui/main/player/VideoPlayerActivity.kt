@@ -12,15 +12,19 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.findNavController
-import androidx.navigation.fragment.findNavController
+import com.google.android.exoplayer2.ext.cast.CastPlayer
+import com.google.android.exoplayer2.ext.cast.SessionAvailabilityListener
+import com.google.android.gms.cast.framework.CastButtonFactory
+import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.cast.framework.CastState
+import com.google.android.gms.cast.framework.CastStateListener
 import kotlinx.android.synthetic.main.activity_video_player.*
+import kotlinx.android.synthetic.main.exo_player_custom_controls.*
 import kotlinx.android.synthetic.main.fragment_video_player.*
-import net.xblacky.animexstream.MainActivity
 import net.xblacky.animexstream.R
 import net.xblacky.animexstream.utils.model.Content
 import timber.log.Timber
-import java.lang.Exception
+
 
 class VideoPlayerActivity : AppCompatActivity(), VideoPlayerListener {
 
@@ -33,13 +37,11 @@ class VideoPlayerActivity : AppCompatActivity(), VideoPlayerListener {
         setContentView(R.layout.activity_video_player)
         viewModel = ViewModelProvider(this).get(VideoPlayerViewModel::class.java)
         getExtra(intent)
-//        (playerFragment as VideoPlayerFragment).updateContent(Content(
-//            url = url,
-//            episodeNumber = "153"
-//        ))
         setObserver()
         goFullScreen()
     }
+
+
 
     override fun onNewIntent(intent: Intent?) {
         (playerFragment as VideoPlayerFragment).playOrPausePlayer(

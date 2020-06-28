@@ -181,7 +181,7 @@ class HtmlParser {
             return try{
                 while (matcher.find()){
                     Timber.e(matcher.group((0)))
-                    if( matcher.group(0)!!.contains("m3u8") || matcher.group(0)!!.contains("googlevideo")){
+                    if( matcher.group(0)!!.contains("m3u8") || matcher.group(0)!!.contains("googlevideo") || matcher.group(0)!!.contains("vidstreaming.io/goto.php")){
                         m3u8Url =  matcher.group(0)
                         break
                     }

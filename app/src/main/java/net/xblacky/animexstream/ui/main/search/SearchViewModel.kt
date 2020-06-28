@@ -47,19 +47,24 @@ class SearchViewModel : CommonViewModel2() {
             )
             updateLoadingState(loading = Loading.LOADING, e = null, isListEmpty = isListEmpty())
         }
-
-
     }
 
     private fun getSearchObserver(searchType: Int): DisposableObserver<ResponseBody> {
         return object : DisposableObserver<ResponseBody>() {
             override fun onComplete() {
-                updateLoadingState(loading = Loading.COMPLETED, e = null, isListEmpty = isListEmpty())
+                updateLoadingState(
+                    loading = Loading.COMPLETED,
+                    e = null,
+                    isListEmpty = isListEmpty()
+                )
             }
 
             override fun onNext(response: ResponseBody) {
                 val list =
-                    HtmlParser.parseMovie(response = response.string(), typeValue = Const.TYPE_DEFAULT)
+                    HtmlParser.parseMovie(
+                        response = response.string(),
+                        typeValue = Const.TYPE_DEFAULT
+                    )
                 if (list.isNullOrEmpty() || list.size < 20) {
                     _canNextPageLoaded = false
                 }
@@ -80,15 +85,14 @@ class SearchViewModel : CommonViewModel2() {
         }
     }
 
-
     override fun onCleared() {
-        if(!compositeDisposable.isDisposed){
+        if (!compositeDisposable.isDisposed) {
             compositeDisposable.dispose()
         }
         super.onCleared()
     }
 
-    private fun isListEmpty(): Boolean{
+    private fun isListEmpty(): Boolean {
         return _searchList.value.isNullOrEmpty()
     }
 

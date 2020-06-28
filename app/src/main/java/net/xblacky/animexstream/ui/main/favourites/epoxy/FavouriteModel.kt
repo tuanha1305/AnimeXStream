@@ -12,13 +12,13 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import kotlinx.android.synthetic.main.recycler_anime_common.view.*
 import net.xblacky.animexstream.R
-import net.xblacky.animexstream.utils.model.AnimeMetaModel
 
 @EpoxyModelClass(layout = R.layout.recycler_anime_common)
 abstract class FavouriteModel : EpoxyModelWithHolder<FavouriteModel.MovieHolder>(){
 
     @EpoxyAttribute
     lateinit var favouriteModel: net.xblacky.animexstream.utils.model.FavouriteModel
+
     @EpoxyAttribute
     var clickListener: View.OnClickListener? = null
 

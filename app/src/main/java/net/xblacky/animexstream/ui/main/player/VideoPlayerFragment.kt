@@ -58,7 +58,7 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
     private lateinit var rootView: View
     private lateinit var player: SimpleExoPlayer
     private lateinit var trackSelectionFactory: TrackSelection.Factory
-    private var trackSelector: DefaultTrackSelector? = null
+    private lateinit var trackSelector: DefaultTrackSelector
     private lateinit var mediaSession: MediaSessionCompat
     private lateinit var mediaSessionConnector: MediaSessionConnector
 
@@ -66,8 +66,8 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
     private lateinit var audioManager: AudioManager
     private lateinit var mFocusRequest: AudioFocusRequest
     private lateinit var content: Content
-    private val DEFAULT_MEDIA_VOLUME = 1f
-    private val DUCK_MEDIA_VOLUME = 0.2f
+    private val defaultMediaVolume = 1f
+    private val duckMediaVolume = 0.2f
     private lateinit var handler: Handler
     private var isFullScreen = false
     private var isVideoPlaying: Boolean = false
@@ -333,7 +333,7 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
     }
 
     private fun showDialog() {
-        mappedTrackInfo = trackSelector?.currentMappedTrackInfo
+        mappedTrackInfo = trackSelector.currentMappedTrackInfo
 
         try {
             TrackSelectionDialogBuilder(
@@ -350,7 +350,7 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
 
     // set playback speed for exoplayer
     private fun setPlaybackSpeed(speed: Float) {
-        val params: PlaybackParameters = PlaybackParameters(speed)
+        val params = PlaybackParameters(speed)
         player.playbackParameters = params
     }
 
@@ -531,14 +531,14 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
     override fun onAudioFocusChange(focusChange: Int) {
         when (focusChange) {
             AudioManager.AUDIOFOCUS_GAIN -> {
-                player.volume = DEFAULT_MEDIA_VOLUME
+                player.volume = defaultMediaVolume
                 playOrPausePlayer(true)
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
                 playOrPausePlayer(false, loseAudioFocus = false)
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                player.volume = DUCK_MEDIA_VOLUME
+                player.volume = duckMediaVolume
             }
             AudioManager.AUDIOFOCUS_LOSS -> {
                 playOrPausePlayer(false)

@@ -74,7 +74,7 @@ abstract class AnimePopularModel : EpoxyModelWithHolder<AnimePopularModel.Popula
         holder.flowLayout.removeAllViews()
 
         animeMetaModel.genreList?.forEach {
-            holder.flowLayout.addView(GenreTags(holder.flowLayout.context).getGenreTag(it.genreName,it.genreUrl))
+            holder.flowLayout.addView(GenreTags(holder.flowLayout.context).getGenreTag(it.genreName))
         }
         holder.rootView.setOnClickListener(clickListener)
 

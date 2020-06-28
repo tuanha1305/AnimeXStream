@@ -1,7 +1,6 @@
 package net.xblacky.animexstream.utils.model
 
 data class AnimeInfoModel(
-
     var id: String,
     var animeTitle: String,
     var imageUrl: String,

@@ -107,8 +107,7 @@ class AnimeInfoFragment : Fragment() {
         animeInfoModel.genre.forEach {
             animeInfoBinding.flowLayout.addView(
                 GenreTags(context!!).getGenreTag(
-                    genreName = it.genreName,
-                    genreUrl = it.genreUrl
+                    genreName = it.genreName
                 )
             )
         }

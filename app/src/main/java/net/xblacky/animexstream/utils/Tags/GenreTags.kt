@@ -8,19 +8,22 @@ import android.widget.LinearLayout
 import kotlinx.android.synthetic.main.tags_genre.view.*
 import net.xblacky.animexstream.R
 
-class GenreTags(var context: Context){
+class GenreTags(var context: Context) {
 
-    public fun getGenreTag(genreName: String, genreUrl: String): View{
-        var view =LayoutInflater.from(context).inflate(R.layout.tags_genre, null)
-        var button = view.genre
+    fun getGenreTag(genreName: String): View {
+        val view = LayoutInflater.from(context).inflate(R.layout.tags_genre, null)
+
+        val button = view.genre
         button.text = genreName
-        button.maxLines  = 1
-        val rel_button1 = LinearLayout.LayoutParams(
+        button.maxLines = 1
+
+        val relButton1 = LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
-        rel_button1.setMargins(8, 8, 8, 8)
-        button.layoutParams = rel_button1
+        relButton1.setMargins(8, 8, 8, 8)
+        button.layoutParams = relButton1
+
         return view
     }
 

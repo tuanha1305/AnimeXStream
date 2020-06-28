@@ -12,9 +12,8 @@ import net.xblacky.animexstream.utils.model.FavouriteModel
 import net.xblacky.animexstream.utils.parser.HtmlParser
 import okhttp3.ResponseBody
 
-class AnimeInfoViewModel(categoryUrl: String) : CommonViewModel() {
+class AnimeInfoViewModel(private val categoryUrl: String) : CommonViewModel() {
 
-    private var categoryUrl: String? = null
     private var _animeInfoModel: MutableLiveData<AnimeInfoModel> = MutableLiveData()
     private var _episodeList: MutableLiveData<ArrayList<EpisodeModel>> = MutableLiveData()
     var episodeList: LiveData<ArrayList<EpisodeModel>> = _episodeList
@@ -25,14 +24,13 @@ class AnimeInfoViewModel(categoryUrl: String) : CommonViewModel() {
     var isFavourite: LiveData<Boolean> = _isFavourite
 
     init {
-        this.categoryUrl = categoryUrl
         fetchAnimeInfo()
     }
 
     private fun fetchAnimeInfo() {
         updateLoading(loading = true)
         updateErrorModel(false, null, false)
-        categoryUrl?.let {
+        categoryUrl.let {
             compositeDisposable.add(
                 animeInfoRepository.fetchAnimeInfo(it)
                     .subscribeWith(getAnimeInfoObserver(Const.TYPE_ANIME_INFO))
@@ -81,14 +79,12 @@ class AnimeInfoViewModel(categoryUrl: String) : CommonViewModel() {
         }
     }
 
-
     fun toggleFavourite() {
         if (_isFavourite.value!!) {
             animeInfoModel.value?.id?.let { animeInfoRepository.removeFromFavourite(it) }
             _isFavourite.value = false
         } else {
             saveFavourite()
-
         }
     }
 

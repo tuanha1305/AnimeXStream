@@ -2,7 +2,6 @@ package net.xblacky.animexstream.ui.main.animeinfo
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import retrofit2.http.Url
 import java.lang.IllegalArgumentException
 
 class AnimeInfoViewModelFactory(private val categoryUrl: String) : ViewModelProvider.Factory {

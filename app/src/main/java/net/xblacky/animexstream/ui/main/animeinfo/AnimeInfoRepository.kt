@@ -5,7 +5,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import io.realm.Realm
 import net.xblacky.animexstream.utils.model.FavouriteModel
-import net.xblacky.animexstream.utils.realm.InitalizeRealm
+import net.xblacky.animexstream.utils.realm.InitializeRealm
 import net.xblacky.animexstream.utils.rertofit.NetworkInterface
 import net.xblacky.animexstream.utils.rertofit.RetrofitHelper
 import okhttp3.ResponseBody
@@ -13,7 +13,7 @@ import okhttp3.ResponseBody
 class AnimeInfoRepository {
 
     private val retrofit = RetrofitHelper.getRetrofitInstance()
-    private val realm = Realm.getInstance(InitalizeRealm.getConfig())
+    private val realm = Realm.getInstance(InitializeRealm.getConfig())
 
     fun fetchAnimeInfo(categoryUrl: String): Observable<ResponseBody> {
         val animeInfoService = retrofit.create(NetworkInterface.FetchAnimeInfo::class.java)
@@ -42,7 +42,6 @@ class AnimeInfoRepository {
         realm.executeTransaction {
             it.where(FavouriteModel::class.java).equalTo("ID", id).findAll().deleteAllFromRealm()
         }
-
     }
 
 }

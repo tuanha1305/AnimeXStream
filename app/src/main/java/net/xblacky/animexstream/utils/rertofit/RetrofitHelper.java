@@ -42,13 +42,9 @@ public class RetrofitHelper {
                 .baseUrl(Const.BASE_URL)
                 .build();
         retrofitInstance = retrofit;
-
     }
 
-
     public static Retrofit getRetrofitInstance() {
-
         return retrofitInstance;
-
     }
 }

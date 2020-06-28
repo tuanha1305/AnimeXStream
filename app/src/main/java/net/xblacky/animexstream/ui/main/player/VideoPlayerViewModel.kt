@@ -84,7 +84,6 @@ class VideoPlayerViewModel : CommonViewModel() {
                     saveContent(content!!)
                     updateLoading(false)
                 }
-
             }
 
             override fun onError(e: Throwable) {
@@ -100,7 +99,6 @@ class VideoPlayerViewModel : CommonViewModel() {
             episodeRepository.saveContent(content)
         }
     }
-
 
     override fun onCleared() {
         if (!compositeDisposable.isDisposed) {

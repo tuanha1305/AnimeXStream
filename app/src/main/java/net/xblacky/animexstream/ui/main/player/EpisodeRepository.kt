@@ -4,7 +4,7 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import io.realm.Realm
-import net.xblacky.animexstream.utils.constants.C
+import net.xblacky.animexstream.utils.constants.Const
 import net.xblacky.animexstream.utils.rertofit.NetworkInterface
 import net.xblacky.animexstream.utils.rertofit.RetrofitHelper
 import net.xblacky.animexstream.utils.model.Content
@@ -82,7 +82,7 @@ class EpisodeRepository {
 
     fun clearContent(){
             realm.executeTransactionAsync {
-                val results = it.where(Content::class.java).lessThanOrEqualTo("insertionTime", System.currentTimeMillis() - C.MAX_TIME_M3U8_URL).findAll()
+                val results = it.where(Content::class.java).lessThanOrEqualTo("insertionTime", System.currentTimeMillis() - Const.MAX_TIME_M3U8_URL).findAll()
                 results.deleteAllFromRealm()
             }
     }

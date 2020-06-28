@@ -1,7 +1,7 @@
 package net.xblacky.animexstream.utils.parser
 
 import io.realm.RealmList
-import net.xblacky.animexstream.utils.constants.C
+import net.xblacky.animexstream.utils.constants.Const
 import net.xblacky.animexstream.utils.model.*
 import org.jsoup.Jsoup
 import org.jsoup.select.Elements
@@ -176,7 +176,7 @@ class HtmlParser {
             var m3u8Url: String?= ""
             val document = Jsoup.parse(response)
             val info = document?.getElementsByClass("videocontent")
-            val pattern = Pattern.compile(C.M3U8_REGEX_PATTERN)
+            val pattern = Pattern.compile(Const.M3U8_REGEX_PATTERN)
             val matcher = pattern.matcher(info.toString())
             return try{
                 while (matcher.find()){

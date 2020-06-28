@@ -4,8 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import net.xblacky.animexstream.R
-import net.xblacky.animexstream.utils.constants.C
-import net.xblacky.animexstream.utils.model.ErrorModel
+import net.xblacky.animexstream.utils.constants.Const
 import net.xblacky.animexstream.utils.model.LoadingModel2
 import retrofit2.HttpException
 import java.net.HttpURLConnection
@@ -17,21 +16,21 @@ open class CommonViewModel2 : ViewModel(){
 
     private val _loadingModel: MutableLiveData<LoadingModel2> = MutableLiveData()
     val loadingModel: LiveData<LoadingModel2> = _loadingModel
-    private var errorCode: Int = C.ERROR_CODE_DEFAULT
+    private var errorCode: Int = Const.ERROR_CODE_DEFAULT
     private var errorMsgId = R.string.something_went_wrong
 
     private  fun updateErrorModel(e: Throwable?) {
         e?.let {
             if (e is HttpException) {
                 errorCode = when (e.code()) {
-                    HttpURLConnection.HTTP_BAD_REQUEST -> C.RESPONSE_UNKNOWN
-                    else -> C.ERROR_CODE_DEFAULT
+                    HttpURLConnection.HTTP_BAD_REQUEST -> Const.RESPONSE_UNKNOWN
+                    else -> Const.ERROR_CODE_DEFAULT
                 }
             } else if (e is SocketException || e is UnknownHostException || e is SocketTimeoutException) {
-                errorCode = C.NO_INTERNET_CONNECTION
+                errorCode = Const.NO_INTERNET_CONNECTION
                 errorMsgId = R.string.no_internet
             } else{
-                errorCode = C.ERROR_CODE_DEFAULT
+                errorCode = Const.ERROR_CODE_DEFAULT
             }
         }
     }

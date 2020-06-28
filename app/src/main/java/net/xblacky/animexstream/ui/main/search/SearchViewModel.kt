@@ -2,12 +2,10 @@ package net.xblacky.animexstream.ui.main.search
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.observers.DisposableObserver
-import net.xblacky.animexstream.utils.CommonViewModel
 import net.xblacky.animexstream.utils.CommonViewModel2
-import net.xblacky.animexstream.utils.constants.C
+import net.xblacky.animexstream.utils.constants.Const
 import net.xblacky.animexstream.utils.model.AnimeMetaModel
 import net.xblacky.animexstream.utils.parser.HtmlParser
 import okhttp3.ResponseBody
@@ -33,7 +31,7 @@ class SearchViewModel : CommonViewModel2() {
                 searchRepository.fetchSearchList(
                     keyword,
                     pageNumber
-                ).subscribeWith(getSearchObserver(C.TYPE_SEARCH_NEW))
+                ).subscribeWith(getSearchObserver(Const.TYPE_SEARCH_NEW))
             )
             updateLoadingState(loading = Loading.LOADING, e = null, isListEmpty = isListEmpty())
         }
@@ -45,7 +43,7 @@ class SearchViewModel : CommonViewModel2() {
                 searchRepository.fetchSearchList(
                     keyword,
                     pageNumber
-                ).subscribeWith(getSearchObserver(C.TYPE_SEARCH_UPDATE))
+                ).subscribeWith(getSearchObserver(Const.TYPE_SEARCH_UPDATE))
             )
             updateLoadingState(loading = Loading.LOADING, e = null, isListEmpty = isListEmpty())
         }
@@ -61,13 +59,13 @@ class SearchViewModel : CommonViewModel2() {
 
             override fun onNext(response: ResponseBody) {
                 val list =
-                    HtmlParser.parseMovie(response = response.string(), typeValue = C.TYPE_DEFAULT)
+                    HtmlParser.parseMovie(response = response.string(), typeValue = Const.TYPE_DEFAULT)
                 if (list.isNullOrEmpty() || list.size < 20) {
                     _canNextPageLoaded = false
                 }
-                if (searchType == C.TYPE_SEARCH_NEW) {
+                if (searchType == Const.TYPE_SEARCH_NEW) {
                     _searchList.value = list
-                } else if (searchType == C.TYPE_SEARCH_UPDATE) {
+                } else if (searchType == Const.TYPE_SEARCH_UPDATE) {
                     val updatedList = _searchList.value
                     updatedList?.addAll(list)
                     _searchList.value = updatedList

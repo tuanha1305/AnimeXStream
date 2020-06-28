@@ -6,7 +6,7 @@ import com.airbnb.epoxy.Carousel.setDefaultGlobalSnapHelperFactory
 import com.airbnb.epoxy.CarouselModel_
 import com.airbnb.epoxy.TypedEpoxyController
 import net.xblacky.animexstream.R
-import net.xblacky.animexstream.utils.constants.C
+import net.xblacky.animexstream.utils.constants.Const
 import net.xblacky.animexstream.utils.epoxy.AnimeCommonModel_
 import net.xblacky.animexstream.utils.model.AnimeMetaModel
 import net.xblacky.animexstream.utils.model.HomeScreenModel
@@ -29,7 +29,7 @@ class HomeController(var adapterCallbacks: EpoxyAdapterCallbacks) : TypedEpoxyCo
 
             when (homeScreenModel.typeValue) {
 
-                C.TYPE_MOVIE, C.TYPE_NEW_SEASON -> {
+                Const.TYPE_MOVIE, Const.TYPE_NEW_SEASON -> {
                     val movieModelList: ArrayList<AnimeCommonModel_> = ArrayList()
                     homeScreenModel.animeList?.forEach {
                         val animeMetaModel = it
@@ -52,7 +52,7 @@ class HomeController(var adapterCallbacks: EpoxyAdapterCallbacks) : TypedEpoxyCo
                             .addTo(this)
 
                 }
-                C.TYPE_POPULAR_ANIME -> {
+                Const.TYPE_POPULAR_ANIME -> {
                     homeScreenModel.animeList?.forEach {
                         val animeMetaModel = it
 

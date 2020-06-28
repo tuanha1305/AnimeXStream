@@ -12,11 +12,8 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.findNavController
-import androidx.navigation.fragment.findNavController
 import kotlinx.android.synthetic.main.activity_video_player.*
 import kotlinx.android.synthetic.main.fragment_video_player.*
-import net.xblacky.animexstream.MainActivity
 import net.xblacky.animexstream.R
 import net.xblacky.animexstream.utils.model.Content
 import timber.log.Timber
@@ -28,6 +25,7 @@ class VideoPlayerActivity : AppCompatActivity(), VideoPlayerListener {
     private var episodeNumber: String? = ""
     private var animeName: String? = ""
     private lateinit var content: Content
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_video_player)
@@ -49,17 +47,11 @@ class VideoPlayerActivity : AppCompatActivity(), VideoPlayerListener {
         (playerFragment as VideoPlayerFragment).saveWatchedDuration()
         getExtra(intent)
         super.onNewIntent(intent)
-
     }
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         enterPipMode()
-    }
-
-
-    override fun onResume() {
-        super.onResume()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -106,7 +98,7 @@ class VideoPlayerActivity : AppCompatActivity(), VideoPlayerListener {
     override fun onStop() {
         if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
             && packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
-            &&  hasPipPermission()
+            && hasPipPermission()
         ) {
             finishAndRemoveTask()
         }
@@ -131,7 +123,7 @@ class VideoPlayerActivity : AppCompatActivity(), VideoPlayerListener {
             && (playerFragment as VideoPlayerFragment).isVideoPlaying()
             && hasPipPermission()
         ) {
-            try{
+            try {
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     val params = PictureInPictureParams.Builder()
@@ -139,7 +131,7 @@ class VideoPlayerActivity : AppCompatActivity(), VideoPlayerListener {
                 } else {
                     this.enterPictureInPictureMode()
                 }
-            }catch (ex:Exception){
+            } catch (ex: Exception) {
                 Timber.e(ex.message)
             }
 
@@ -218,21 +210,19 @@ class VideoPlayerActivity : AppCompatActivity(), VideoPlayerListener {
         viewModel.updateEpisodeContent(
             Content(
                 episodeUrl = content.nextEpisodeUrl,
-                episodeName = "$animeName (EP ${incrimentEpisodeNumber(content.episodeName!!)})",
+                episodeName = "$animeName (EP ${incrementEpisodeNumber(content.episodeName!!)})",
                 url = "",
                 animeName = content.animeName
             )
         )
         viewModel.fetchEpisodeMediaUrl()
-
     }
 
     override fun playPreviousEpisode() {
-
         viewModel.updateEpisodeContent(
             Content(
                 episodeUrl = content.previousEpisodeUrl,
-                episodeName = "$animeName (EP ${decrimentEpisodeNumber(content.episodeName!!)})",
+                episodeName = "$animeName (EP ${decrementEpisodeNumber(content.episodeName!!)})",
                 url = "",
                 animeName = content.animeName
             )
@@ -240,7 +230,7 @@ class VideoPlayerActivity : AppCompatActivity(), VideoPlayerListener {
         viewModel.fetchEpisodeMediaUrl()
     }
 
-    private fun incrimentEpisodeNumber(episodeName: String): String {
+    private fun incrementEpisodeNumber(episodeName: String): String {
         return try {
             val episodeString = episodeName.substring(
                 episodeName.lastIndexOf(' ') + 1,
@@ -255,7 +245,7 @@ class VideoPlayerActivity : AppCompatActivity(), VideoPlayerListener {
         }
     }
 
-    private fun decrimentEpisodeNumber(episodeName: String): String {
+    private fun decrementEpisodeNumber(episodeName: String): String {
         return try {
             val episodeString = episodeName.substring(
                 episodeName.lastIndexOf(' ') + 1,
@@ -264,14 +254,12 @@ class VideoPlayerActivity : AppCompatActivity(), VideoPlayerListener {
             var episodeNumber = Integer.parseInt(episodeString)
             episodeNumber--
             episodeNumber.toString()
-
         } catch (obe: ArrayIndexOutOfBoundsException) {
             ""
         }
     }
 
     fun refreshM3u8Url() {
-
         viewModel.fetchEpisodeMediaUrl(fetchFromDb = false)
     }
 

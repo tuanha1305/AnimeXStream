@@ -2,15 +2,13 @@ package net.xblacky.animexstream.ui.main.player
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.google.android.exoplayer2.upstream.HttpDataSource
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.observers.DisposableObserver
 import net.xblacky.animexstream.utils.CommonViewModel
-import net.xblacky.animexstream.utils.constants.C
+import net.xblacky.animexstream.utils.constants.Const
 import net.xblacky.animexstream.utils.model.Content
 import net.xblacky.animexstream.utils.parser.HtmlParser
 import okhttp3.ResponseBody
-import retrofit2.HttpException
 
 class VideoPlayerViewModel : CommonViewModel() {
 
@@ -47,7 +45,7 @@ class VideoPlayerViewModel : CommonViewModel() {
         compositeDisposable.add(
             episodeRepository.fetchEpisodeMediaUrl(url = url).subscribeWith(
                 getEpisodeUrlObserver(
-                    C.TYPE_MEDIA_URL
+                    Const.TYPE_MEDIA_URL
                 )
             )
         )
@@ -64,12 +62,12 @@ class VideoPlayerViewModel : CommonViewModel() {
             }
 
             override fun onNext(response: ResponseBody) {
-                if (type == C.TYPE_MEDIA_URL) {
+                if (type == Const.TYPE_MEDIA_URL) {
                     val episodeInfo = HtmlParser.parseMediaUrl(response = response.string())
                     episodeInfo.vidcdnUrl?.let {
                         compositeDisposable.add(
                             episodeRepository.fetchM3u8Url(episodeInfo.vidcdnUrl!!).subscribeWith(
-                                getEpisodeUrlObserver(C.TYPE_M3U8_URL)
+                                getEpisodeUrlObserver(Const.TYPE_M3U8_URL)
                             )
                         )
                     }
@@ -78,7 +76,7 @@ class VideoPlayerViewModel : CommonViewModel() {
                     _content.value?.watchedDuration = watchedEpisode?.watchedDuration ?: 0
                     _content.value?.previousEpisodeUrl = episodeInfo.previousEpisodeUrl
                     _content.value?.nextEpisodeUrl = episodeInfo.nextEpisodeUrl
-                } else if (type == C.TYPE_M3U8_URL) {
+                } else if (type == Const.TYPE_M3U8_URL) {
                     val m3u8Url = HtmlParser.parseM3U8Url(response = response.string())
                     val content = _content.value
                     content?.url = m3u8Url

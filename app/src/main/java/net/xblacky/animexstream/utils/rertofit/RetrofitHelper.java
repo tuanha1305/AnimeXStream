@@ -1,7 +1,7 @@
 package net.xblacky.animexstream.utils.rertofit;
 
 import net.xblacky.animexstream.BuildConfig;
-import net.xblacky.animexstream.utils.constants.C;
+import net.xblacky.animexstream.utils.constants.Const;
 
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -20,17 +20,17 @@ public class RetrofitHelper {
         }
     }
 
-    private RetrofitHelper(){
+    private RetrofitHelper() {
         OkHttpClient client;
 
-        if(BuildConfig.DEBUG){
+        if (BuildConfig.DEBUG) {
             HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
             interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
             client = new OkHttpClient.Builder()
                     .retryOnConnectionFailure(true)
                     .addInterceptor(interceptor)
                     .build();
-        }else{
+        } else {
             client = new OkHttpClient.Builder()
                     .retryOnConnectionFailure(true)
                     .build();
@@ -39,14 +39,14 @@ public class RetrofitHelper {
         Retrofit retrofit = new Retrofit.Builder()
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .client(client)
-                .baseUrl(C.Companion.getBASE_URL())
+                .baseUrl(Const.BASE_URL)
                 .build();
         retrofitInstance = retrofit;
 
     }
 
 
-    public static Retrofit getRetrofitInstance(){
+    public static Retrofit getRetrofitInstance() {
 
         return retrofitInstance;
 

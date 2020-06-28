@@ -6,7 +6,8 @@
     android:layout_height="match_parent"
     android:id="@+id/videoPlayerLoading"
     android:clickable="true"
-    android:background="@android:color/black">
+    android:background="@android:color/black"
+    android:focusable="true">
 
     <ProgressBar
         android:layout_width="wrap_content"

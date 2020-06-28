@@ -19,35 +19,41 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.android.synthetic.main.fragment_search.view.*
-import kotlinx.android.synthetic.main.loading.view.*
 import net.xblacky.animexstream.R
+import net.xblacky.animexstream.databinding.FragmentSearchBinding
+import net.xblacky.animexstream.databinding.LoadingBinding
 import net.xblacky.animexstream.ui.main.search.epoxy.SearchController
 import net.xblacky.animexstream.utils.CommonViewModel2
 import net.xblacky.animexstream.utils.ItemOffsetDecoration
 import net.xblacky.animexstream.utils.Utils
 import net.xblacky.animexstream.utils.model.AnimeMetaModel
-import timber.log.Timber
-
 
 class SearchFragment : Fragment(), View.OnClickListener,
     SearchController.EpoxySearchAdapterCallbacks {
 
-    private lateinit var rootView: View
     private lateinit var viewModel: SearchViewModel
-    private lateinit var searchController: SearchController
+    private val searchController by lazy {
+        SearchController(this)
+    }
+
+    private lateinit var searchbinding: FragmentSearchBinding
+    private lateinit var loadingBinding: LoadingBinding
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        rootView = inflater.inflate(R.layout.fragment_search, container, false)
+        searchbinding = FragmentSearchBinding.inflate(inflater, container, false)
+        loadingBinding = LoadingBinding.inflate(inflater, searchbinding.root)
+
         setOnClickListeners()
         setAdapters()
         setRecyclerViewScroll()
         setEditTextListener()
         showKeyBoard()
-        return rootView
+
+        return searchbinding.root
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -57,10 +63,10 @@ class SearchFragment : Fragment(), View.OnClickListener,
     }
 
     private fun setEditTextListener() {
-        rootView.searchEditText.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
+        searchbinding.searchEditText.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH || event.action == KeyEvent.ACTION_DOWN) {
                 hideKeyBoard()
-                rootView.searchEditText.clearFocus()
+                searchbinding.searchEditText.clearFocus()
                 viewModel.fetchSearchList(v.text.toString().trim())
                 return@OnEditorActionListener true
             }
@@ -68,26 +74,24 @@ class SearchFragment : Fragment(), View.OnClickListener,
         })
     }
 
-
     private fun setOnClickListeners() {
-        rootView.backButton.setOnClickListener(this)
+        searchbinding.backButton.setOnClickListener(this)
     }
 
     private fun setAdapters() {
-        searchController = SearchController(this)
         searchController.spanCount = Utils.calculateNoOfColumns(context!!, 150f)
-        rootView.searchRecyclerView.apply {
+        searchbinding.searchRecyclerView.apply {
             layoutManager = GridLayoutManager(context, Utils.calculateNoOfColumns(context!!, 150f))
             adapter = searchController.adapter
             (layoutManager as GridLayoutManager).spanSizeLookup = searchController.spanSizeLookup
         }
-        rootView.searchRecyclerView.addItemDecoration(
+
+        searchbinding.searchRecyclerView.addItemDecoration(
             ItemOffsetDecoration(
                 context,
                 R.dimen.episode_offset_left
             )
         )
-
     }
 
     private fun getSpanCount(): Int {
@@ -100,34 +104,33 @@ class SearchFragment : Fragment(), View.OnClickListener,
     }
 
     private fun setObserver() {
-
-
         viewModel.loadingModel.observe(viewLifecycleOwner, Observer {
             if (it.isListEmpty) {
-                if (it.loading == CommonViewModel2.Loading.LOADING) rootView.loading.visibility =
+                if (it.loading == CommonViewModel2.Loading.LOADING) loadingBinding.loading.visibility =
                     View.VISIBLE
                 //TODO Error Visibiity GONE
 
                 else if (it.loading == CommonViewModel2.Loading.ERROR
                 //Todo Error visisblity visible
-                ) rootView.loading.visibility = View.GONE
+                ) loadingBinding.loading.visibility = View.GONE
             } else {
                 searchController.setData(
                     viewModel.searchList.value,
                     it.loading == CommonViewModel2.Loading.LOADING
                 )
-                if (it.loading == CommonViewModel2.Loading.ERROR) view?.let { it1 ->
-                    Snackbar.make(
-                        it1,
-                        getString(it.errorMsg),
-                        Snackbar.LENGTH_SHORT
-                    ).show()
+                if (it.loading == CommonViewModel2.Loading.ERROR) {
+                    view?.let { it1 ->
+                        Snackbar.make(
+                            it1,
+                            getString(it.errorMsg),
+                            Snackbar.LENGTH_SHORT
+                        ).show()
+                    }
+                } else if (it.loading == CommonViewModel2.Loading.COMPLETED) {
+                    loadingBinding.loading.visibility =
+                        View.GONE
                 }
-                else if (it.loading == CommonViewModel2.Loading.COMPLETED) rootView.loading.visibility =
-                    View.GONE
-
             }
-
         })
 
 //        viewModel.searchList.observe(viewLifecycleOwner, Observer {
@@ -141,12 +144,12 @@ class SearchFragment : Fragment(), View.OnClickListener,
 //        viewModel.isLoading.observe( viewLifecycleOwner, Observer {
 //            if(it.isLoading){
 //                if(it.isListEmpty){
-//                    rootView.loading.visibility =  View.VISIBLE
+//                    loadingBinding.loading.visibility =  View.VISIBLE
 //                }else{
-//                    rootView.loading.visibility = View.GONE
+//                    loadingBinding.loading.visibility = View.GONE
 //                }
 //            }else{
-//               rootView.loading.visibility = View.GONE
+//               loadingBinding.loading.visibility = View.GONE
 //            }
 //            searchController.setData(viewModel.searchList.value, it.isLoading)
 //        })
@@ -157,16 +160,15 @@ class SearchFragment : Fragment(), View.OnClickListener,
             R.id.backButton -> {
                 hideKeyBoard()
                 findNavController().popBackStack()
-
             }
         }
     }
 
     private fun setRecyclerViewScroll() {
-        rootView.searchRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+        searchbinding.searchRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                val layoutManger = rootView.searchRecyclerView.layoutManager as GridLayoutManager
+                val layoutManger = searchbinding.searchRecyclerView.layoutManager as GridLayoutManager
                 val visibleItemCount = layoutManger.childCount
                 val totalItemCount = layoutManger.itemCount
                 val firstVisibleItemPosition = layoutManger.findFirstVisibleItemPosition()

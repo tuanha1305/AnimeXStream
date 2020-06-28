@@ -5,7 +5,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import io.realm.Realm
 import io.realm.Sort
-import net.xblacky.animexstream.utils.constants.C
+import net.xblacky.animexstream.utils.constants.Const
 import net.xblacky.animexstream.utils.rertofit.NetworkInterface
 import net.xblacky.animexstream.utils.rertofit.RetrofitHelper
 import net.xblacky.animexstream.utils.model.AnimeMetaModel
@@ -58,7 +58,7 @@ class HomeRepository {
         val realm: Realm = Realm.getInstance(InitalizeRealm.getConfig())
 
         realm.executeTransaction{
-            val results = it.where(AnimeMetaModel::class.java).lessThanOrEqualTo("timestamp", System.currentTimeMillis() - C.MAX_TIME_FOR_ANIME).findAll()
+            val results = it.where(AnimeMetaModel::class.java).lessThanOrEqualTo("timestamp", System.currentTimeMillis() - Const.MAX_TIME_FOR_ANIME).findAll()
             results.deleteAllFromRealm()
         }
     }

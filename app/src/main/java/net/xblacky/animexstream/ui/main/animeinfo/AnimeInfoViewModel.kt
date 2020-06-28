@@ -2,18 +2,15 @@ package net.xblacky.animexstream.ui.main.animeinfo
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.observers.DisposableObserver
 import net.xblacky.animexstream.utils.CommonViewModel
-import net.xblacky.animexstream.utils.constants.C
+import net.xblacky.animexstream.utils.constants.Const
 import net.xblacky.animexstream.utils.model.AnimeInfoModel
 import net.xblacky.animexstream.utils.model.EpisodeModel
 import net.xblacky.animexstream.utils.model.FavouriteModel
 import net.xblacky.animexstream.utils.parser.HtmlParser
-import okhttp3.Response
 import okhttp3.ResponseBody
-import timber.log.Timber
 
 class AnimeInfoViewModel(categoryUrl: String) : CommonViewModel() {
 
@@ -32,13 +29,13 @@ class AnimeInfoViewModel(categoryUrl: String) : CommonViewModel() {
         fetchAnimeInfo()
     }
 
-    fun fetchAnimeInfo() {
+    private fun fetchAnimeInfo() {
         updateLoading(loading = true)
         updateErrorModel(false, null, false)
         categoryUrl?.let {
             compositeDisposable.add(
                 animeInfoRepository.fetchAnimeInfo(it)
-                    .subscribeWith(getAnimeInfoObserver(C.TYPE_ANIME_INFO))
+                    .subscribeWith(getAnimeInfoObserver(Const.TYPE_ANIME_INFO))
             )
         }
     }
@@ -46,7 +43,7 @@ class AnimeInfoViewModel(categoryUrl: String) : CommonViewModel() {
     private fun getAnimeInfoObserver(typeValue: Int): DisposableObserver<ResponseBody> {
         return object : DisposableObserver<ResponseBody>() {
             override fun onNext(response: ResponseBody) {
-                if (typeValue == C.TYPE_ANIME_INFO) {
+                if (typeValue == Const.TYPE_ANIME_INFO) {
                     val animeInfoModel = HtmlParser.parseAnimeInfo(response = response.string())
                     _animeInfoModel.value = animeInfoModel
                     compositeDisposable.add(
@@ -55,12 +52,12 @@ class AnimeInfoViewModel(categoryUrl: String) : CommonViewModel() {
                             endEpisode = animeInfoModel.endEpisode,
                             alias = animeInfoModel.alias
                         )
-                            .subscribeWith(getAnimeInfoObserver(C.TYPE_EPISODE_LIST))
+                            .subscribeWith(getAnimeInfoObserver(Const.TYPE_EPISODE_LIST))
                     )
                     _isFavourite.value = animeInfoRepository.isFavourite(animeInfoModel.id)
 
 
-                } else if (typeValue == C.TYPE_EPISODE_LIST) {
+                } else if (typeValue == Const.TYPE_EPISODE_LIST) {
                     _episodeList.value = HtmlParser.fetchEpisodeList(response = response.string())
                     updateLoading(loading = false)
 
@@ -73,7 +70,7 @@ class AnimeInfoViewModel(categoryUrl: String) : CommonViewModel() {
 
             override fun onError(e: Throwable) {
                 updateLoading(loading = false)
-                if (typeValue == C.TYPE_ANIME_INFO) {
+                if (typeValue == Const.TYPE_ANIME_INFO) {
                     updateErrorModel(show = true, e = e, isListEmpty = false)
                 } else {
                     updateErrorModel(show = true, e = e, isListEmpty = true)

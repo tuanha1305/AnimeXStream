@@ -1,7 +1,7 @@
 package net.xblacky.animexstream.utils.rertofit
 
 import io.reactivex.Observable
-import net.xblacky.animexstream.utils.constants.C
+import net.xblacky.animexstream.utils.constants.Const
 import okhttp3.ResponseBody
 import retrofit2.http.GET
 import retrofit2.http.Headers
@@ -14,9 +14,9 @@ class NetworkInterface {
 
     interface FetchRecentSubOrDub {
         @Headers(
-            C.USER_AGENT,
-            C.ORIGIN,
-            C.REFERER
+            Const.USER_AGENT,
+            Const.ORIGIN,
+            Const.REFERER
         )
         @GET("https://ajax.gogocdn.net/ajax/page-recent-release.html")
         fun get(
@@ -28,9 +28,9 @@ class NetworkInterface {
     interface FetchPopularFromAjax {
 
         @Headers(
-            C.USER_AGENT,
-            C.ORIGIN,
-            C.REFERER
+            Const.USER_AGENT,
+            Const.ORIGIN,
+            Const.REFERER
         )
         @GET("https://ajax.gogocdn.net/ajax/page-recent-release-ongoing.html")
         fun get(
@@ -40,8 +40,8 @@ class NetworkInterface {
 
     interface FetchMovies {
         @Headers(
-            C.USER_AGENT,
-            C.REFERER
+            Const.USER_AGENT,
+            Const.REFERER
         )
         @GET("/anime-movies.html")
         fun get(
@@ -51,8 +51,8 @@ class NetworkInterface {
 
     interface FetchNewestSeason {
         @Headers(
-            C.USER_AGENT,
-            C.REFERER
+            Const.USER_AGENT,
+            Const.REFERER
         )
 
         @GET("/new-season.html")
@@ -63,8 +63,8 @@ class NetworkInterface {
 
     interface FetchEpisodeMediaUrl {
         @Headers(
-            C.USER_AGENT,
-            C.REFERER
+            Const.USER_AGENT,
+            Const.REFERER
         )
         @GET
         fun get(
@@ -75,8 +75,8 @@ class NetworkInterface {
 
     interface FetchAnimeInfo {
         @Headers(
-            C.USER_AGENT,
-            C.REFERER
+            Const.USER_AGENT,
+            Const.REFERER
         )
         @GET
         fun get(
@@ -86,8 +86,8 @@ class NetworkInterface {
 
     interface FetchM3u8Url {
         @Headers(
-            C.USER_AGENT,
-            C.REFERER
+            Const.USER_AGENT,
+            Const.REFERER
         )
         @GET
         fun get(
@@ -97,11 +97,11 @@ class NetworkInterface {
 
     interface FetchEpisodeList{
         @Headers(
-            C.USER_AGENT,
-            C.ORIGIN,
-            C.REFERER
+            Const.USER_AGENT,
+            Const.ORIGIN,
+            Const.REFERER
         )
-        @GET(C.EPISODE_LOAD_URL)
+        @GET(Const.EPISODE_LOAD_URL)
         fun get(
             @Query("ep_start") startEpisode: Int = 0,
             @Query("ep_end") endEpisode: String,
@@ -113,10 +113,10 @@ class NetworkInterface {
 
     interface FetchSearchData{
         @Headers(
-            C.USER_AGENT,
-            C.REFERER
+            Const.USER_AGENT,
+            Const.REFERER
         )
-        @GET(C.SEARCH_URL)
+        @GET(Const.SEARCH_URL)
         fun get(
             @Query("keyword") keyword: String,
             @Query("page") page: Int

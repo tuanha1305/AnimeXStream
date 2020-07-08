@@ -20,7 +20,7 @@ abstract class AnimeCommonModel : EpoxyModelWithHolder<AnimeCommonModel.MovieHol
     @EpoxyAttribute
     lateinit var animeMetaModel: AnimeMetaModel
     @EpoxyAttribute
-    var clickListener: View.OnClickListener? = null
+    lateinit var clickListener: View.OnClickListener
 
     override fun bind(holder: MovieHolder) {
         Glide.with(holder.animeImageView.context).load(animeMetaModel.imageUrl).transition(

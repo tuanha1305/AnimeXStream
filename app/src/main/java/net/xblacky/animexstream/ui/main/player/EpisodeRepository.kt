@@ -4,21 +4,18 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import io.realm.Realm
-import net.xblacky.animexstream.utils.constants.C
+import net.xblacky.animexstream.utils.constants.Const
 import net.xblacky.animexstream.utils.rertofit.NetworkInterface
-import net.xblacky.animexstream.utils.rertofit.RetrofitHelper
 import net.xblacky.animexstream.utils.model.Content
 import net.xblacky.animexstream.utils.model.WatchedEpisode
-import net.xblacky.animexstream.utils.realm.InitalizeRealm
 import okhttp3.ResponseBody
 import retrofit2.Retrofit
 import timber.log.Timber
 
-
-class EpisodeRepository {
-    private var retrofit: Retrofit = RetrofitHelper.getRetrofitInstance()!!
-    private var realm = Realm.getInstance(InitalizeRealm.getConfig())
-
+class EpisodeRepository(
+    private val retrofit: Retrofit,
+    private val realm: Realm
+) {
 
     fun fetchEpisodeMediaUrl(url: String): Observable<ResponseBody> {
         val mediaUrlService = retrofit.create(NetworkInterface.FetchEpisodeMediaUrl::class.java)
@@ -33,38 +30,39 @@ class EpisodeRepository {
     }
 
 
-    fun fetchWatchedDuration(id: Int): WatchedEpisode?{
+    fun fetchWatchedDuration(id: Int): WatchedEpisode? {
         return realm.where(WatchedEpisode::class.java).equalTo("id", id).findFirst()
     }
 
     fun fetchContent(episodeUrl: String): Content? {
         try {
             var content: Content? = null
-            val result =  realm.where(Content::class.java).equalTo("episodeUrl", episodeUrl).findFirst()
+            val result =
+                realm.where(Content::class.java).equalTo("episodeUrl", episodeUrl).findFirst()
             result?.let {
                 content = realm.copyFromRealm(it)
             }
             Timber.e("ID : %s", content?.episodeUrl.hashCode())
             val watchedEpisode = fetchWatchedDuration(content?.episodeUrl.hashCode())
-            content?.watchedDuration = watchedEpisode?.watchedDuration?.let { it
-            } ?: 0
+            content?.watchedDuration = watchedEpisode?.watchedDuration ?: 0
+
             return content
-
-
         } catch (ignored: Exception) {
+
         }
         return null
     }
 
 
-    fun saveContent(content: Content){
+    fun saveContent(content: Content) {
         try {
             content.insertionTime = System.currentTimeMillis()
             realm.executeTransactionAsync { realm1: Realm ->
                 realm1.insertOrUpdate(content)
             }
 
-            val progressPercentage: Long = ((content.watchedDuration.toDouble()/(content.duration).toDouble()) * 100).toLong()
+            val progressPercentage: Long =
+                ((content.watchedDuration.toDouble() / (content.duration).toDouble()) * 100).toLong()
             val watchedEpisode = WatchedEpisode(
                 id = content.episodeUrl.hashCode(),
                 watchedDuration = content.watchedDuration,
@@ -76,14 +74,18 @@ class EpisodeRepository {
                 it.insertOrUpdate(watchedEpisode)
             }
         } catch (ignored: Exception) {
+
         }
     }
 
 
-    fun clearContent(){
-            realm.executeTransactionAsync {
-                val results = it.where(Content::class.java).lessThanOrEqualTo("insertionTime", System.currentTimeMillis() - C.MAX_TIME_M3U8_URL).findAll()
-                results.deleteAllFromRealm()
-            }
+    fun clearContent() {
+        realm.executeTransactionAsync {
+            val results = it.where(Content::class.java).lessThanOrEqualTo(
+                "insertionTime",
+                System.currentTimeMillis() - Const.MAX_TIME_M3U8_URL
+            ).findAll()
+            results.deleteAllFromRealm()
+        }
     }
 }

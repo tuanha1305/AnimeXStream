@@ -1,5 +1,6 @@
 package net.xblacky.animexstream.ui.main.home
 
+import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -10,24 +11,26 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.observers.DisposableObserver
 import io.realm.*
 import net.xblacky.animexstream.utils.Utils
-import net.xblacky.animexstream.utils.constants.C
+import net.xblacky.animexstream.utils.constants.Const
 import net.xblacky.animexstream.utils.model.AnimeMetaModel
 import net.xblacky.animexstream.utils.model.HomeScreenModel
 import net.xblacky.animexstream.utils.model.UpdateModel
 import net.xblacky.animexstream.utils.parser.HtmlParser
-import net.xblacky.animexstream.utils.realm.InitalizeRealm
+import net.xblacky.animexstream.utils.realm.InitializeRealm
 import okhttp3.ResponseBody
 import timber.log.Timber
 import java.lang.IndexOutOfBoundsException
 import kotlin.collections.ArrayList
 
-class HomeViewModel : ViewModel(){
+class HomeViewModel @ViewModelInject constructor(
+    private val homeRepository: HomeRepository
+) : ViewModel() {
 
-    private val  homeRepository = HomeRepository()
-    private var _animeList: MutableLiveData<ArrayList<HomeScreenModel>> = MutableLiveData(makeEmptyArrayList())
-    var animeList : LiveData<ArrayList<HomeScreenModel>> = _animeList
+    private var _animeList: MutableLiveData<ArrayList<HomeScreenModel>> =
+        MutableLiveData(makeEmptyArrayList())
+    var animeList: LiveData<ArrayList<HomeScreenModel>> = _animeList
     private var _updateModel: MutableLiveData<UpdateModel> = MutableLiveData()
-    var updateModel : LiveData<UpdateModel> = _updateModel
+    var updateModel: LiveData<UpdateModel> = _updateModel
     private val compositeDisposable = CompositeDisposable()
     private val realmListenerList = ArrayList<RealmResults<AnimeMetaModel>>()
     private lateinit var database: DatabaseReference
@@ -37,7 +40,7 @@ class HomeViewModel : ViewModel(){
         queryDB()
     }
 
-    private fun fetchHomeList(){
+    private fun fetchHomeList() {
         fetchRecentSub()
         fetchRecentDub()
         fetchPopular()
@@ -45,10 +48,10 @@ class HomeViewModel : ViewModel(){
         fetchMovies()
     }
 
-    private fun queryDB(){
+    private fun queryDB() {
         database = Firebase.database.reference
         val query: Query = database.child("appdata")
-        query.addListenerForSingleValueEvent(object : ValueEventListener{
+        query.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onCancelled(ignored: DatabaseError) {
                 Timber.e(ignored.message)
             }
@@ -60,32 +63,30 @@ class HomeViewModel : ViewModel(){
                     whatsNew = snapshot.child("whatsNew").value.toString()
                 )
             }
-
         })
     }
+
     private fun getHomeListObserver(typeValue: Int): DisposableObserver<ResponseBody> {
-        return  object : DisposableObserver<ResponseBody>(){
+        return object : DisposableObserver<ResponseBody>() {
             override fun onComplete() {
                 Timber.d("Request Completed")
-
             }
 
             override fun onNext(response: ResponseBody) {
-                val list =parseList(response = response.string(), typeValue = typeValue)
+                val list = parseList(response = response.string(), typeValue = typeValue)
                 homeRepository.addDataInRealm(list)
             }
 
             override fun onError(e: Throwable) {
                 updateError(e)
             }
-
         }
     }
 
-    private fun updateError(e: Throwable){
+    private fun updateError(e: Throwable) {
         var isListEmpty = true
         animeList.value?.forEach {
-            if(!it.animeList.isNullOrEmpty()){
+            if (!it.animeList.isNullOrEmpty()) {
                 isListEmpty = false
             }
         }
@@ -93,20 +94,18 @@ class HomeViewModel : ViewModel(){
 
     }
 
-
-
-    private fun parseList(response: String, typeValue: Int): ArrayList<AnimeMetaModel>{
-        return when(typeValue){
-            C.TYPE_RECENT_DUB -> HtmlParser.parseRecentSubOrDub(response,typeValue)
-            C.TYPE_RECENT_SUB -> HtmlParser.parseRecentSubOrDub(response,typeValue)
-            C.TYPE_POPULAR_ANIME -> HtmlParser.parsePopular(response,typeValue)
-            C.TYPE_MOVIE -> HtmlParser.parseMovie(response,typeValue)
-            C.TYPE_NEW_SEASON ->HtmlParser.parseMovie(response,typeValue)
+    private fun parseList(response: String, typeValue: Int): ArrayList<AnimeMetaModel> {
+        return when (typeValue) {
+            Const.TYPE_RECENT_DUB -> HtmlParser.parseRecentSubOrDub(response, typeValue)
+            Const.TYPE_RECENT_SUB -> HtmlParser.parseRecentSubOrDub(response, typeValue)
+            Const.TYPE_POPULAR_ANIME -> HtmlParser.parsePopular(response, typeValue)
+            Const.TYPE_MOVIE -> HtmlParser.parseMovie(response, typeValue)
+            Const.TYPE_NEW_SEASON -> HtmlParser.parseMovie(response, typeValue)
             else -> ArrayList()
         }
     }
 
-    private fun updateList(list: ArrayList<AnimeMetaModel>, typeValue: Int){
+    private fun updateList(list: ArrayList<AnimeMetaModel>, typeValue: Int) {
         val homeScreenModel = HomeScreenModel(
             typeValue = typeValue,
             type = Utils.getTypeName(typeValue),
@@ -114,17 +113,17 @@ class HomeViewModel : ViewModel(){
         )
 
         val newList = animeList.value!!
-            try{
+        try {
 //               val preHomeScreenModel = newList[getPositionByType(typeValue)]
 //                if(preHomeScreenModel.typeValue == homeScreenModel.typeValue){
-                    newList[getPositionByType(typeValue)] = homeScreenModel
+            newList[getPositionByType(typeValue)] = homeScreenModel
 //                }else{
 //                    newList.add(getPositionByType(typeValue),homeScreenModel)
 //                }
 
-            }catch (iobe: IndexOutOfBoundsException){
+        } catch (iobe: IndexOutOfBoundsException) {
 //                newList.add(getPositionByType(typeValue),homeScreenModel)
-            }
+        }
 
 
 //        newList.sortedByDescending {
@@ -133,102 +132,108 @@ class HomeViewModel : ViewModel(){
         _animeList.value = newList
     }
 
-    private fun addRealmListener(typeValue: Int){
-        val realm = Realm.getInstance(InitalizeRealm.getConfig())
+    private fun addRealmListener(typeValue: Int) {
+        val realm = Realm.getInstance(InitializeRealm.getConfig())
         realm.use {
-            val results = it.where(AnimeMetaModel::class.java).equalTo("typeValue",typeValue).sort("insertionOrder", Sort.ASCENDING)
+            val results = it.where(AnimeMetaModel::class.java).equalTo("typeValue", typeValue)
+                .sort("insertionOrder", Sort.ASCENDING)
                 .findAll()
 
-            results.addChangeListener { newResult :RealmResults<AnimeMetaModel> , _ ->
-                    val newAnimeList = (it.copyFromRealm(newResult) as ArrayList<AnimeMetaModel>)
-                    updateList(newAnimeList, typeValue)
+            results.addChangeListener { newResult: RealmResults<AnimeMetaModel>, _ ->
+                val newAnimeList = (it.copyFromRealm(newResult) as ArrayList<AnimeMetaModel>)
+                updateList(newAnimeList, typeValue)
             }
             realmListenerList.add(results)
         }
     }
 
-
-
-    private fun getPositionByType(typeValue: Int): Int{
+    private fun getPositionByType(typeValue: Int): Int {
         val size = animeList.value!!.size
-        return when(typeValue){
-            C.TYPE_RECENT_SUB-> if(size >= C.RECENT_SUB_POSITION) C.RECENT_SUB_POSITION else size
-            C.TYPE_RECENT_DUB-> if(size >= C.RECENT_DUB_POSITION) C.RECENT_DUB_POSITION else size
-            C.TYPE_POPULAR_ANIME -> if(size >= C.POPULAR_POSITION) C.POPULAR_POSITION else size
-            C.TYPE_MOVIE ->if(size >= C.MOVIE_POSITION) C.MOVIE_POSITION else size
-            C.TYPE_NEW_SEASON ->if(size >= C.NEWEST_SEASON_POSITION) C.NEWEST_SEASON_POSITION else size
-            else->size
+        return when (typeValue) {
+            Const.TYPE_RECENT_SUB -> if (size >= Const.RECENT_SUB_POSITION) Const.RECENT_SUB_POSITION else size
+            Const.TYPE_RECENT_DUB -> if (size >= Const.RECENT_DUB_POSITION) Const.RECENT_DUB_POSITION else size
+            Const.TYPE_POPULAR_ANIME -> if (size >= Const.POPULAR_POSITION) Const.POPULAR_POSITION else size
+            Const.TYPE_MOVIE -> if (size >= Const.MOVIE_POSITION) Const.MOVIE_POSITION else size
+            Const.TYPE_NEW_SEASON -> if (size >= Const.NEWEST_SEASON_POSITION) Const.NEWEST_SEASON_POSITION else size
+            else -> size
         }
     }
 
-
-    private fun makeEmptyArrayList(): ArrayList<HomeScreenModel>{
+    private fun makeEmptyArrayList(): ArrayList<HomeScreenModel> {
         var i = 1
         val arrayList: ArrayList<HomeScreenModel> = ArrayList()
-        while (i<=6){
-            arrayList.add(
-                HomeScreenModel(
-                    typeValue = i
-                )
-            )
+        while (i <= 6) {
+            arrayList.add(HomeScreenModel(typeValue = i))
             i++
         }
         return arrayList
     }
 
-    private fun fetchRecentSub(){
-
-        val list = homeRepository.fetchFromRealm(C.TYPE_RECENT_SUB)
-        if(list.size >0){
-            updateList(list,C.TYPE_RECENT_SUB)
+    private fun fetchRecentSub() {
+        val list = homeRepository.fetchFromRealm(Const.TYPE_RECENT_SUB)
+        if (list.size > 0) {
+            updateList(list, Const.TYPE_RECENT_SUB)
         }
-        compositeDisposable.add(homeRepository.fetchRecentSubOrDub(1, C.RECENT_SUB).subscribeWith(getHomeListObserver(C.TYPE_RECENT_SUB)))
-        addRealmListener(C.TYPE_RECENT_SUB)
+        compositeDisposable.add(
+            homeRepository.fetchRecentSubOrDub(1, Const.RECENT_SUB)
+                .subscribeWith(getHomeListObserver(Const.TYPE_RECENT_SUB))
+        )
+        addRealmListener(Const.TYPE_RECENT_SUB)
     }
 
-    private fun fetchRecentDub(){
-        val list = homeRepository.fetchFromRealm(C.TYPE_RECENT_DUB)
-        if(list.size >0){
-            updateList(list,C.TYPE_RECENT_DUB)
+    private fun fetchRecentDub() {
+        val list = homeRepository.fetchFromRealm(Const.TYPE_RECENT_DUB)
+        if (list.size > 0) {
+            updateList(list, Const.TYPE_RECENT_DUB)
         }
-        compositeDisposable.add(homeRepository.fetchRecentSubOrDub(1, C.RECENT_DUB).subscribeWith(getHomeListObserver(C.TYPE_RECENT_DUB)))
-        addRealmListener(C.TYPE_RECENT_DUB)
+        compositeDisposable.add(
+            homeRepository.fetchRecentSubOrDub(1, Const.RECENT_DUB)
+                .subscribeWith(getHomeListObserver(Const.TYPE_RECENT_DUB))
+        )
+        addRealmListener(Const.TYPE_RECENT_DUB)
     }
 
-    private fun fetchMovies(){
-        val list = homeRepository.fetchFromRealm(C.TYPE_MOVIE)
-        if(list.size>0){
-            updateList(list,C.TYPE_MOVIE)
+    private fun fetchMovies() {
+        val list = homeRepository.fetchFromRealm(Const.TYPE_MOVIE)
+        if (list.size > 0) {
+            updateList(list, Const.TYPE_MOVIE)
         }
-        compositeDisposable.add(homeRepository.fetchMovies(1).subscribeWith(getHomeListObserver(C.TYPE_MOVIE)))
-        addRealmListener(C.TYPE_MOVIE)
+        compositeDisposable.add(
+            homeRepository.fetchMovies(1).subscribeWith(getHomeListObserver(Const.TYPE_MOVIE))
+        )
+        addRealmListener(Const.TYPE_MOVIE)
     }
 
-    private fun fetchPopular(){
-        val list = homeRepository.fetchFromRealm(C.TYPE_POPULAR_ANIME)
-        if(list.size>0){
-            updateList(list,C.TYPE_POPULAR_ANIME)
+    private fun fetchPopular() {
+        val list = homeRepository.fetchFromRealm(Const.TYPE_POPULAR_ANIME)
+        if (list.size > 0) {
+            updateList(list, Const.TYPE_POPULAR_ANIME)
         }
-        compositeDisposable.add(homeRepository.fetchPopularFromAjax(1).subscribeWith(getHomeListObserver(C.TYPE_POPULAR_ANIME)))
-        addRealmListener(C.TYPE_POPULAR_ANIME)
+        compositeDisposable.add(
+            homeRepository.fetchPopularFromAjax(1)
+                .subscribeWith(getHomeListObserver(Const.TYPE_POPULAR_ANIME))
+        )
+        addRealmListener(Const.TYPE_POPULAR_ANIME)
     }
 
-    private fun fetchNewSeason(){
-        val resultList = homeRepository.fetchFromRealm(C.TYPE_NEW_SEASON)
-        if(resultList.size>0){
-            updateList(resultList,C.TYPE_NEW_SEASON)
+    private fun fetchNewSeason() {
+        val resultList = homeRepository.fetchFromRealm(Const.TYPE_NEW_SEASON)
+        if (resultList.size > 0) {
+            updateList(resultList, Const.TYPE_NEW_SEASON)
         }
-        compositeDisposable.add(homeRepository.fetchNewestAnime(1).subscribeWith(getHomeListObserver(C.TYPE_NEW_SEASON)))
-        addRealmListener(C.TYPE_NEW_SEASON)
+        compositeDisposable.add(
+            homeRepository.fetchNewestAnime(1)
+                .subscribeWith(getHomeListObserver(Const.TYPE_NEW_SEASON))
+        )
+        addRealmListener(Const.TYPE_NEW_SEASON)
     }
 
     override fun onCleared() {
         homeRepository.removeFromRealm()
-        if(!compositeDisposable.isDisposed){
+        if (!compositeDisposable.isDisposed) {
             compositeDisposable.dispose()
         }
         super.onCleared()
     }
-
 
 }

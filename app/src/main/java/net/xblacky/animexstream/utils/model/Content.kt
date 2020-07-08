@@ -3,8 +3,6 @@ package net.xblacky.animexstream.utils.model
 import io.realm.RealmObject
 import io.realm.annotations.Ignore
 import io.realm.annotations.PrimaryKey
-import java.time.Duration
-
 
 open class Content(
     var url: String?="",

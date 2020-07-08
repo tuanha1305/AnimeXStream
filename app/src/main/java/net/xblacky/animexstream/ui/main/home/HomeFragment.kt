@@ -1,6 +1,5 @@
 package net.xblacky.animexstream.ui.main.home
 
-import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -9,47 +8,51 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import kotlinx.android.synthetic.main.fragment_home.view.*
+import dagger.hilt.android.AndroidEntryPoint
 import net.xblacky.animexstream.BuildConfig
 import net.xblacky.animexstream.R
+import net.xblacky.animexstream.databinding.FragmentHomeBinding
 import net.xblacky.animexstream.ui.main.home.epoxy.HomeController
-import net.xblacky.animexstream.utils.constants.C
+import net.xblacky.animexstream.utils.constants.Const
 import net.xblacky.animexstream.utils.model.AnimeMetaModel
 import timber.log.Timber
 
+@AndroidEntryPoint
 class HomeFragment : Fragment(), View.OnClickListener, HomeController.EpoxyAdapterCallbacks {
 
-
-    private lateinit var rootView: View
-    private lateinit var homeController: HomeController
     private var doubleClickLastTime = 0L
-    private lateinit var viewModel: HomeViewModel
+    private val viewModel: HomeViewModel by viewModels()
+    private val homeController by lazy {
+        HomeController(this)
+    }
+
+    private lateinit var binding: FragmentHomeBinding
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        rootView = inflater.inflate(R.layout.fragment_home, container, false)
+        binding = FragmentHomeBinding.inflate(inflater, container, false)
+
         setAdapter()
         setClickListeners()
-        return rootView
+
+        return binding.root
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        viewModel = ViewModelProvider(this).get(HomeViewModel::class.java)
         viewModelObserver()
     }
 
     private fun setAdapter() {
-        homeController = HomeController(this)
-
         homeController.isDebugLoggingEnabled = true
-        val homeRecyclerView = rootView.recyclerView
+        val homeRecyclerView = binding.recyclerView
         homeRecyclerView.layoutManager = LinearLayoutManager(context)
         homeRecyclerView.adapter = homeController.adapter
     }
@@ -68,16 +71,16 @@ class HomeFragment : Fragment(), View.OnClickListener, HomeController.EpoxyAdapt
     }
 
     private fun setClickListeners() {
-        rootView.header.setOnClickListener(this)
-        rootView.search.setOnClickListener(this)
-        rootView.favorite.setOnClickListener(this)
+        binding.header.setOnClickListener(this)
+        binding.search.setOnClickListener(this)
+        binding.favorite.setOnClickListener(this)
     }
 
     override fun onClick(v: View?) {
         when (v?.id) {
             R.id.header -> {
                 doubleClickLastTime = if (System.currentTimeMillis() - doubleClickLastTime < 300) {
-                    rootView.recyclerView.smoothScrollToPosition(0)
+                    binding.recyclerView.smoothScrollToPosition(0)
                     0L
                 } else {
                     System.currentTimeMillis()
@@ -104,7 +107,7 @@ class HomeFragment : Fragment(), View.OnClickListener, HomeController.EpoxyAdapt
     }
 
     override fun animeTitleClick(model: AnimeMetaModel) {
-        if(!model.categoryUrl.isNullOrBlank()){
+        if (!model.categoryUrl.isNullOrBlank()) {
             findNavController().navigate(
                 HomeFragmentDirections.actionHomeFragmentToAnimeInfoFragment(
                     categoryUrl = model.categoryUrl
@@ -115,12 +118,12 @@ class HomeFragment : Fragment(), View.OnClickListener, HomeController.EpoxyAdapt
     }
 
     private fun showDialog(whatsNew: String) {
-        AlertDialog.Builder(context!!).setTitle("New Update Available")
+        AlertDialog.Builder(requireContext()).setTitle("New Update Available")
             .setMessage("What's New ! \n$whatsNew")
             .setCancelable(false)
             .setPositiveButton("Update") { _, _ ->
                 val i = Intent(Intent.ACTION_VIEW)
-                i.data = Uri.parse(C.GIT_DOWNLOAD_URL)
+                i.data = Uri.parse(Const.GIT_DOWNLOAD_URL)
                 startActivity(i)
             }
             .setNegativeButton("Not now") { dialog, _ ->

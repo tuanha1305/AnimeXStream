@@ -1,5 +1,6 @@
 package net.xblacky.animexstream.ui.main.favourites
 
+import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -7,15 +8,16 @@ import io.realm.Realm
 import io.realm.RealmResults
 import io.realm.Sort
 import net.xblacky.animexstream.utils.model.FavouriteModel
-import net.xblacky.animexstream.utils.realm.InitalizeRealm
+import net.xblacky.animexstream.utils.realm.InitializeRealm
 
-class FavouriteViewModel : ViewModel() {
+class FavouriteViewModel @ViewModelInject constructor() : ViewModel() {
 
     private lateinit var result: RealmResults<FavouriteModel>
-    private val realm = Realm.getInstance(InitalizeRealm.getConfig())
+    private val realm = Realm.getInstance(InitializeRealm.getConfig())
     private val _favouriteLists: MutableLiveData<ArrayList<FavouriteModel>> =
         MutableLiveData(ArrayList())
     var favouriteList: LiveData<ArrayList<FavouriteModel>> = _favouriteLists
+
     init {
         favouriteListListener()
     }

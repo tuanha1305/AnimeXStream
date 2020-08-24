@@ -159,9 +159,8 @@ class HtmlParser {
         fun parseMediaUrl(response: String): EpisodeInfo{
             var mediaUrl: String?
             val document = Jsoup.parse(response)
-            val info = document?.getElementsByClass("anime")?.first()?.select("a")
+            val info = document?.getElementsByClass("vidcdn")?.first()?.select("a")
             mediaUrl = info?.attr("data-video").toString()
-            mediaUrl = mediaUrl.replace("streaming.php", "loadserver.php")
             val nextEpisodeUrl = document.getElementsByClass("anime_video_body_episodes_r")?.select("a")?.first()?.attr("href")
             val previousEpisodeUrl = document.getElementsByClass("anime_video_body_episodes_l")?.select("a")?.first()?.attr("href")
 

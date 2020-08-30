@@ -4,11 +4,13 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import io.realm.Realm
+import net.xblacky.animexstream.utils.Utils
 import net.xblacky.animexstream.utils.model.FavouriteModel
 import net.xblacky.animexstream.utils.realm.InitalizeRealm
 import net.xblacky.animexstream.utils.rertofit.NetworkInterface
 import net.xblacky.animexstream.utils.rertofit.RetrofitHelper
 import okhttp3.ResponseBody
+import okhttp3.internal.Util
 
 class AnimeInfoRepository {
 
@@ -17,12 +19,14 @@ class AnimeInfoRepository {
 
     fun fetchAnimeInfo(categoryUrl: String): Observable<ResponseBody> {
         val animeInfoService = retrofit.create(NetworkInterface.FetchAnimeInfo::class.java)
-       return animeInfoService.get(categoryUrl).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread())
+        return animeInfoService.get(Utils.getHeader(), categoryUrl).subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
     }
 
-    fun fetchEpisodeList(id: String, endEpisode: String, alias: String): Observable<ResponseBody>{
+    fun fetchEpisodeList(id: String, endEpisode: String, alias: String): Observable<ResponseBody> {
         val animeEpisodeService = retrofit.create(NetworkInterface.FetchEpisodeList::class.java)
-        return animeEpisodeService.get(id= id, endEpisode = endEpisode, alias = alias).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread())
+        return animeEpisodeService.get(id = id, endEpisode = endEpisode, alias = alias, header = Utils.getHeader())
+            .subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread())
     }
 
     fun isFavourite(id: String): Boolean {
@@ -32,13 +36,13 @@ class AnimeInfoRepository {
         } ?: return false
     }
 
-    fun addToFavourite(favouriteModel: FavouriteModel){
+    fun addToFavourite(favouriteModel: FavouriteModel) {
         realm.executeTransaction {
             it.insertOrUpdate(favouriteModel)
         }
     }
 
-    fun removeFromFavourite(id: String){
+    fun removeFromFavourite(id: String) {
         realm.executeTransaction {
             it.where(FavouriteModel::class.java).equalTo("ID", id).findAll().deleteAllFromRealm()
         }

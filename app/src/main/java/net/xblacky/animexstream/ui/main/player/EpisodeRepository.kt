@@ -4,6 +4,7 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import io.realm.Realm
+import net.xblacky.animexstream.utils.Utils
 import net.xblacky.animexstream.utils.constants.C
 import net.xblacky.animexstream.utils.rertofit.NetworkInterface
 import net.xblacky.animexstream.utils.rertofit.RetrofitHelper
@@ -22,13 +23,13 @@ class EpisodeRepository {
 
     fun fetchEpisodeMediaUrl(url: String): Observable<ResponseBody> {
         val mediaUrlService = retrofit.create(NetworkInterface.FetchEpisodeMediaUrl::class.java)
-        return mediaUrlService.get(url).subscribeOn(Schedulers.io())
+        return mediaUrlService.get(Utils.getHeader(),url).subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
     }
 
     fun fetchM3u8Url(url: String): Observable<ResponseBody> {
         val m3u8urlService = retrofit.create(NetworkInterface.FetchM3u8Url::class.java)
-        return m3u8urlService.get(url).subscribeOn(Schedulers.io())
+        return m3u8urlService.get(Utils.getHeader(),url).subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
     }
 

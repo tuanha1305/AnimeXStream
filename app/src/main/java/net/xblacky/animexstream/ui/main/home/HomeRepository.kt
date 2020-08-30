@@ -5,6 +5,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import io.realm.Realm
 import io.realm.Sort
+import net.xblacky.animexstream.utils.Utils
 import net.xblacky.animexstream.utils.constants.C
 import net.xblacky.animexstream.utils.rertofit.NetworkInterface
 import net.xblacky.animexstream.utils.rertofit.RetrofitHelper
@@ -19,27 +20,27 @@ class HomeRepository {
 
     fun fetchRecentSubOrDub(page: Int, type: Int): Observable<ResponseBody> {
         val fetchHomeListService = retrofit.create(NetworkInterface.FetchRecentSubOrDub::class.java)
-        return fetchHomeListService.get(page, type).subscribeOn(Schedulers.io())
+        return fetchHomeListService.get(Utils.getHeader(),page, type).subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
     }
 
     fun fetchPopularFromAjax(page: Int): Observable<ResponseBody> {
         val fetchPopularListService =
             retrofit.create(NetworkInterface.FetchPopularFromAjax::class.java)
-        return fetchPopularListService.get(page).subscribeOn(Schedulers.io())
+        return fetchPopularListService.get(Utils.getHeader(),page).subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
     }
 
     fun fetchMovies(page: Int): Observable<ResponseBody> {
         val fetchMoviesListService = retrofit.create(NetworkInterface.FetchMovies::class.java)
-        return fetchMoviesListService.get(page).subscribeOn(Schedulers.io())
+        return fetchMoviesListService.get(Utils.getHeader(),page).subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
     }
 
     fun fetchNewestAnime(page: Int): Observable<ResponseBody> {
         val fetchNewestSeasonService =
             retrofit.create(NetworkInterface.FetchNewestSeason::class.java)
-        return fetchNewestSeasonService.get(page).subscribeOn(Schedulers.io())
+        return fetchNewestSeasonService.get(Utils.getHeader(),page).subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
     }
 

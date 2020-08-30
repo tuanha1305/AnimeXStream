@@ -4,22 +4,18 @@ import io.reactivex.Observable
 import net.xblacky.animexstream.utils.constants.C
 import okhttp3.ResponseBody
 import retrofit2.http.GET
-import retrofit2.http.Headers
+import retrofit2.http.HeaderMap
 import retrofit2.http.Query
 import retrofit2.http.Url
 
 class NetworkInterface {
 
-    //TODO To add Header for undectability
 
     interface FetchRecentSubOrDub {
-        @Headers(
-            C.USER_AGENT,
-            C.ORIGIN,
-            C.REFERER
-        )
+
         @GET("https://ajax.gogocdn.net/ajax/page-recent-release.html")
         fun get(
+            @HeaderMap header: Map<String, String>,
             @Query("page") page: Int,
             @Query("type") type: Int
         ): Observable<ResponseBody>
@@ -27,82 +23,63 @@ class NetworkInterface {
 
     interface FetchPopularFromAjax {
 
-        @Headers(
-            C.USER_AGENT,
-            C.ORIGIN,
-            C.REFERER
-        )
         @GET("https://ajax.gogocdn.net/ajax/page-recent-release-ongoing.html")
         fun get(
+            @HeaderMap header: Map<String, String>,
             @Query("page") page: Int
         ): Observable<ResponseBody>
     }
 
     interface FetchMovies {
-        @Headers(
-            C.USER_AGENT,
-            C.REFERER
-        )
+
         @GET("/anime-movies.html")
         fun get(
+            @HeaderMap header: Map<String, String>,
             @Query("page") page: Int
         ): Observable<ResponseBody>
     }
 
     interface FetchNewestSeason {
-        @Headers(
-            C.USER_AGENT,
-            C.REFERER
-        )
 
         @GET("/new-season.html")
         fun get(
+            @HeaderMap header: Map<String, String>,
             @Query("page") page: Int
         ): Observable<ResponseBody>
     }
 
     interface FetchEpisodeMediaUrl {
-        @Headers(
-            C.USER_AGENT,
-            C.REFERER
-        )
+
         @GET
         fun get(
+            @HeaderMap header: Map<String, String>,
             @Url url: String
         ): Observable<ResponseBody>
 
     }
 
     interface FetchAnimeInfo {
-        @Headers(
-            C.USER_AGENT,
-            C.REFERER
-        )
         @GET
         fun get(
+            @HeaderMap header: Map<String, String>,
             @Url url: String
         ): Observable<ResponseBody>
     }
 
     interface FetchM3u8Url {
-        @Headers(
-            C.USER_AGENT,
-            C.REFERER
-        )
+
         @GET
         fun get(
+            @HeaderMap header: Map<String, String>,
             @Url url: String
         ): Observable<ResponseBody>
     }
 
-    interface FetchEpisodeList{
-        @Headers(
-            C.USER_AGENT,
-            C.ORIGIN,
-            C.REFERER
-        )
+    interface FetchEpisodeList {
+
         @GET(C.EPISODE_LOAD_URL)
         fun get(
+            @HeaderMap header: Map<String, String>,
             @Query("ep_start") startEpisode: Int = 0,
             @Query("ep_end") endEpisode: String,
             @Query("id") id: String,
@@ -111,13 +88,11 @@ class NetworkInterface {
         ): Observable<ResponseBody>
     }
 
-    interface FetchSearchData{
-        @Headers(
-            C.USER_AGENT,
-            C.REFERER
-        )
+    interface FetchSearchData {
+
         @GET(C.SEARCH_URL)
         fun get(
+            @HeaderMap header: Map<String, String>,
             @Query("keyword") keyword: String,
             @Query("page") page: Int
         ): Observable<ResponseBody>

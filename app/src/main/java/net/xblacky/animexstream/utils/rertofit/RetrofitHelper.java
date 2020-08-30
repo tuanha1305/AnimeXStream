@@ -8,19 +8,12 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 
-public class RetrofitHelper {
+public  class RetrofitHelper {
 
     private static Retrofit retrofitInstance;
 
-    static {
-        try {
-            RetrofitHelper retrofitHelper = new RetrofitHelper();
-        } catch (Exception e) {
-            throw new RuntimeException("Exception occured in creating singleton instance");
-        }
-    }
 
-    private RetrofitHelper(){
+     public RetrofitHelper(String baseUrl){
         OkHttpClient client;
 
         if(BuildConfig.DEBUG){
@@ -39,11 +32,12 @@ public class RetrofitHelper {
         Retrofit retrofit = new Retrofit.Builder()
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .client(client)
-                .baseUrl(C.Companion.getBASE_URL())
+                .baseUrl(baseUrl)
                 .build();
         retrofitInstance = retrofit;
 
     }
+
 
 
     public static Retrofit getRetrofitInstance(){

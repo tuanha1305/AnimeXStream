@@ -3,6 +3,7 @@ package net.xblacky.animexstream.utils
 import android.content.Context
 import android.util.DisplayMetrics
 import net.xblacky.animexstream.utils.constants.C
+import net.xblacky.animexstream.utils.preference.PreferenceHelper
 
 
 class Utils {
@@ -20,6 +21,11 @@ class Utils {
                 C.TYPE_NEW_SEASON-> "New Season"
                 else -> "Default"
             }
+        }
+
+        fun getHeader(): Map<String, String>{
+            val pref = PreferenceHelper.sharedPreference
+            return mapOf("referer" to pref.getReferrer(), "origin" to pref.getOrigin(), "user-agent" to C.USER_AGENT)
         }
 
         fun calculateNoOfColumns(

@@ -8,13 +8,13 @@ import timber.log.Timber
 import java.util.*
 import kotlin.collections.HashMap
 
-class WatchedEpisode(private var animeName: String){
+class WatchedEpisode(animeName: String){
     private var results: RealmResults<WatchedEpisode>? = null
     private val realm = Realm.getInstance(InitalizeRealm.getConfig())
     private val watchedMap: HashMap<Int, Long> = HashMap()
 
     init {
-        results = realm.where(net.xblacky.animexstream.utils.model.WatchedEpisode::class.java)
+        results = realm.where(WatchedEpisode::class.java)
             .equalTo("animeName", animeName).findAll()
         updateWatchMap(results)
         results?.addChangeListener { newResult->

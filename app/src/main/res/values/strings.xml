@@ -21,4 +21,16 @@
     <string name="removed_from_favourites">Anime removed from Favourites</string>
     <string name="see_more"><![CDATA[See more >]]></string>
     <string name="video_quality">Video Quality</string>
+    <string name="home">Home</string>
+    <string name="settings">Settings</string>
+    <string name="little_disc">A simple yet, Powerful Streaming app</string>
+    <string name="large_disc">This app gets all it\'s content from GoGoAnime.
+ Therefore any heavy changes on this site might cause the
+ app to stop working, But we will try our
+ best to get this app running</string>
+    <string name="night_mode">Night Mode</string>
+    <string name="switch_between_light_dark_theme"><![CDATA[Switch Between Light & Dark Theme]]></string>
+    <string name="picture_in_picture">Picture in Picture</string>
+    <string name="toggle_pip_mode">Toggle PIP Mode</string>
+
 </resources>

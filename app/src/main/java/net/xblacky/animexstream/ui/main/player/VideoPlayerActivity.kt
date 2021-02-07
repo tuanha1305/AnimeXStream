@@ -19,6 +19,8 @@ import kotlinx.android.synthetic.main.fragment_video_player.*
 import net.xblacky.animexstream.MainActivity
 import net.xblacky.animexstream.R
 import net.xblacky.animexstream.utils.model.Content
+import net.xblacky.animexstream.utils.preference.Preference
+import net.xblacky.animexstream.utils.preference.PreferenceHelper
 import timber.log.Timber
 import java.lang.Exception
 
@@ -28,6 +30,7 @@ class VideoPlayerActivity : AppCompatActivity(), VideoPlayerListener {
     private var episodeNumber: String? = ""
     private var animeName: String? = ""
     private lateinit var content: Content
+    private val sharedPreference: Preference = PreferenceHelper.sharedPreference
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_video_player)
@@ -93,6 +96,7 @@ class VideoPlayerActivity : AppCompatActivity(), VideoPlayerListener {
                 )
             && hasPipPermission()
             && (playerFragment as VideoPlayerFragment).isVideoPlaying()
+            && sharedPreference.getPIPMode()
         ) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val params = PictureInPictureParams.Builder()
@@ -106,7 +110,8 @@ class VideoPlayerActivity : AppCompatActivity(), VideoPlayerListener {
     override fun onStop() {
         if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
             && packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
-            &&  hasPipPermission()
+            && hasPipPermission()
+            && sharedPreference.getPIPMode()
         ) {
             finishAndRemoveTask()
         }
@@ -116,6 +121,7 @@ class VideoPlayerActivity : AppCompatActivity(), VideoPlayerListener {
     override fun finish() {
         if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
             && packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
+            && sharedPreference.getPIPMode()
         ) {
             finishAndRemoveTask()
         }
@@ -130,8 +136,10 @@ class VideoPlayerActivity : AppCompatActivity(), VideoPlayerListener {
                 )
             && (playerFragment as VideoPlayerFragment).isVideoPlaying()
             && hasPipPermission()
+            && sharedPreference.getPIPMode()
+
         ) {
-            try{
+            try {
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     val params = PictureInPictureParams.Builder()
@@ -139,7 +147,7 @@ class VideoPlayerActivity : AppCompatActivity(), VideoPlayerListener {
                 } else {
                     this.enterPictureInPictureMode()
                 }
-            }catch (ex:Exception){
+            } catch (ex: Exception) {
                 Timber.e(ex.message)
             }
 

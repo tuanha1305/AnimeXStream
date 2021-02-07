@@ -1,6 +1,5 @@
 package net.xblacky.animexstream.ui.main.home
 
-import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -9,7 +8,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -55,11 +53,11 @@ class HomeFragment : Fragment(), View.OnClickListener, HomeController.EpoxyAdapt
     }
 
     private fun viewModelObserver() {
-        viewModel.animeList.observe(viewLifecycleOwner, Observer {
+        viewModel.animeList.observe(viewLifecycleOwner, {
             homeController.setData(it)
         })
 
-        viewModel.updateModel.observe(viewLifecycleOwner, Observer {
+        viewModel.updateModel.observe(viewLifecycleOwner, {
             Timber.e(it.whatsNew)
             if (it.versionCode > BuildConfig.VERSION_CODE) {
                 showDialog(it.whatsNew)
@@ -67,10 +65,15 @@ class HomeFragment : Fragment(), View.OnClickListener, HomeController.EpoxyAdapt
         })
     }
 
+    private fun setTransitionListener() {
+
+    }
+
     private fun setClickListeners() {
         rootView.header.setOnClickListener(this)
         rootView.search.setOnClickListener(this)
         rootView.favorite.setOnClickListener(this)
+        rootView.settings.setOnClickListener(this)
     }
 
     override fun onClick(v: View?) {
@@ -90,6 +93,9 @@ class HomeFragment : Fragment(), View.OnClickListener, HomeController.EpoxyAdapt
             R.id.favorite -> {
                 findNavController().navigate(HomeFragmentDirections.actionHomeFragmentToFavouriteFragment())
             }
+            R.id.settings -> {
+                findNavController().navigate(HomeFragmentDirections.actionHomeFragmentToSettings())
+            }
         }
     }
 
@@ -104,7 +110,7 @@ class HomeFragment : Fragment(), View.OnClickListener, HomeController.EpoxyAdapt
     }
 
     override fun animeTitleClick(model: AnimeMetaModel) {
-        if(!model.categoryUrl.isNullOrBlank()){
+        if (!model.categoryUrl.isNullOrBlank()) {
             findNavController().navigate(
                 HomeFragmentDirections.actionHomeFragmentToAnimeInfoFragment(
                     categoryUrl = model.categoryUrl
@@ -115,7 +121,7 @@ class HomeFragment : Fragment(), View.OnClickListener, HomeController.EpoxyAdapt
     }
 
     private fun showDialog(whatsNew: String) {
-        AlertDialog.Builder(context!!).setTitle("New Update Available")
+        AlertDialog.Builder(requireContext()).setTitle("New Update Available")
             .setMessage("What's New ! \n$whatsNew")
             .setCancelable(false)
             .setPositiveButton("Update") { _, _ ->

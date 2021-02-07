@@ -42,6 +42,8 @@ import net.xblacky.animexstream.utils.constants.C.Companion.ERROR_CODE_DEFAULT
 import net.xblacky.animexstream.utils.constants.C.Companion.NO_INTERNET_CONNECTION
 import net.xblacky.animexstream.utils.constants.C.Companion.RESPONSE_UNKNOWN
 import net.xblacky.animexstream.utils.model.Content
+import net.xblacky.animexstream.utils.preference.Preference
+import net.xblacky.animexstream.utils.preference.PreferenceHelper
 import timber.log.Timber
 import java.io.IOException
 import java.net.URLDecoder
@@ -145,8 +147,8 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
             return HlsMediaSource.Factory(
                 HlsDataSourceFactory {
                     val dataSource: HttpDataSource =
-                        DefaultHttpDataSource("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36")
-                    dataSource.setRequestProperty("Referer", "https://vidstreaming.io/")
+                        DefaultHttpDataSource("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36")
+                    dataSource.setRequestProperty("Referer", "https://vidstreaming.io")
                     dataSource
                 })
                 .setAllowChunklessPreparation(true)
@@ -365,7 +367,7 @@ class VideoPlayerFragment : Fragment(), View.OnClickListener, Player.EventListen
 
     // show dialog to select the speed.
     private fun showDialogForSpeedSelection() {
-        val builder = AlertDialog.Builder(context!!)
+        val builder = AlertDialog.Builder(requireContext())
         builder.apply {
             setTitle("Set your playback speed")
             setSingleChoiceItems(showableSpeed, checkedItem) {_, which ->

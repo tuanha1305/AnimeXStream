@@ -9,11 +9,33 @@ class Preference(private val context: Context) {
     private val BASE_URL = "BASE_URL"
     private val ORIGIN = "ORIGIN"
     private val REFERER = "REFERER"
+    private val NIGHT_MODE = "NIGHT_MODE"
+    private val PIP = "PIP"
     private val PRIVATE_MODE = 0
-    private lateinit var sharedPreferences: SharedPreferences
+    private var sharedPreferences: SharedPreferences
 
     init {
         sharedPreferences = context.getSharedPreferences(PREF_NAME, PRIVATE_MODE)
+    }
+
+    fun setNightMode(nightMode: Boolean) {
+        val editor = sharedPreferences.edit()
+        editor.putBoolean(NIGHT_MODE, nightMode)
+        editor.apply()
+    }
+
+    fun getNightMode(): Boolean {
+        return sharedPreferences.getBoolean(NIGHT_MODE, false)
+    }
+
+    fun setPIPMode(isPip: Boolean) {
+        val editor = sharedPreferences.edit()
+        editor.putBoolean(PIP, isPip)
+        editor.apply()
+    }
+
+    fun getPIPMode(): Boolean {
+        return sharedPreferences.getBoolean(PIP, true)
     }
 
     fun getBaseUrl(): String {
